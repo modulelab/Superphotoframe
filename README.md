@@ -1,281 +1,288 @@
-# Raspiframe - デジタルフォトフレーム
+# SuperPhotoframe - Digital Photo Frame
 
-Raspberry Piベースのデジタルフォトフレームシステム
+[日本語版はこちら / Japanese version](README_ja.md)
 
-## システム要件
+A Raspberry Pi-based digital photo frame system with advanced features.
 
-- **ハードウェア**: Raspberry Pi 3/4/5
-- **OS**: Raspberry Pi OS (Debian 11 Bullseye以降推奨)
-- **Python**: 3.9以上
-- **ディスプレイ**: HDMI接続可能なモニター
-- **ストレージ**: 8GB以上のmicroSDカード
-- **ネットワーク**: WiFiまたは有線LAN
+## System Requirements
 
-## 主な機能
+- **Hardware**: Raspberry Pi 3/4/5
+- **OS**: Raspberry Pi OS (Debian 11 Bullseye or later recommended)
+- **Python**: 3.9 or higher
+- **Display**: HDMI-compatible monitor
+- **Storage**: 8GB+ microSD card
+- **Network**: WiFi or Ethernet
 
-### 📸 写真表示
-- 自動スライドショー
-- フェードイン/アウト効果
-- Ken Burns効果（ズーム）
-- EXIF情報表示（カメラ機種、日付、露出）
-- 日付スクラブ機能
+## Key Features
 
-### 🌐 ネットワーク機能
-- **DLNA/SMB自動検出とマウント**
-- **USBメモリからのWIFI自動設定**
-- Web設定画面
-- QRコード経由の簡単アクセス
+### 📸 Photo Display
+- Automatic slideshow
+- Fade in/out effects
+- Ken Burns effect (zoom & pan)
+- EXIF information display (camera model, date, exposure)
+- Date scrubbing functionality
 
-### 💾 写真ソース
-1. **USBメモリ** - `Photo/`フォルダから直接読み込み
-2. **NAS/DLNA** - ネットワーク上のメディアサーバー
-3. **ローカルストレージ** - 固定パス
+### 🌐 Network Features
+- **DLNA/SMB auto-discovery and mount**
+- **USB WiFi auto-configuration**
+- Web-based settings interface
+- QR code access for easy setup
 
-### 🎮 操作方法
-- ロータリーエンコーダー（回転/押し込み）
-- キーボード（矢印キー、スペース）
-- Webインターフェース
+### 💾 Photo Sources
+1. **USB Drive** - Direct loading from `Photo/` folder
+2. **NAS/DLNA** - Network media server
+3. **Local Storage** - Fixed paths
 
-## セットアップ
+### 🎮 Control Methods
+- Rotary encoder (rotate/push)
+- Keyboard (arrow keys, space)
+- Web interface
 
-### 0. リポジトリのクローン
+## Setup
+
+### 0. Clone Repository
 
 ```bash
-# SSHまたはHTTPSでクローン
-git clone https://github.com/your-username/raspiframe.git
-cd raspiframe
+git clone https://github.com/tolab125/Superphotoframe.git
+cd Superphotoframe
 ```
 
-### 1. セットアップスクリプトの実行
+### 1. Run Setup Script
 
 ```bash
 chmod +x setup_dlna.sh
 ./setup_dlna.sh
 ```
 
-このスクリプトは以下を実行します：
-- 必要なシステムパッケージのインストール（avahi-utils, cifs-utils, chromium-browser等）
-- Pythonライブラリのインストール（`requirements.txt`から）
-- USB自動マウント設定（udevルール）
-- systemdサービスの登録と自動起動設定
-- スクリーンセーバーの無効化
+This script will:
+- Install required system packages (avahi-utils, cifs-utils, chromium-browser, etc.)
+- Install Python libraries (from `requirements.txt`)
+- Configure USB auto-mount (udev rules)
+- Register and enable systemd services
+- Disable screensaver and notifications
 
-### 2. USBメモリの準備
+Interactive configuration during setup:
+- Display rotation (0=landscape, 1=portrait right, 2=upside down, 3=portrait left)
+- HDMI force hotplug (recommended: y)
+- Disable overscan (recommended: y)
+- Auto-login (recommended: y)
 
-**重要**: セットアップ後、USBメモリは自動的に`/mnt/usb`にマウントされます（ユーザー名非依存）
+### 2. Prepare USB Drive
 
-USBメモリのルートに以下のファイルを作成：
+**Important**: After setup, USB drives will automatically mount to `/mnt/usb` (user-independent)
 
-#### `wifi.txt` - WiFi設定（必須）
+Create the following files on the USB drive root:
+
+#### `wifi.txt` - WiFi Configuration (Required)
 ```
 ssid=YourWiFiNetworkName
 password=YourWiFiPassword
 country=JP
 ```
 
-#### `credentials.txt` - NAS認証情報（NAS使用時のみ）
+#### `credentials.txt` - NAS Credentials (NAS use only)
 ```
 username=your_nas_username
 password=your_nas_password
 ```
 
-#### `Photo/` - 写真フォルダ（オプション）
-USBメモリに直接写真を保存する場合は`Photo`フォルダを作成して画像を配置
+#### `Photo/` - Photo Folder (Optional)
+Create this folder and place images if storing photos directly on USB
 
-### 3. 起動
+### 3. Startup
 
 ```bash
-# 再起動（推奨）
+# Reboot (recommended)
 sudo reboot
 
-# または手動起動
+# Or manual start
 sudo systemctl start raspiframe
 sudo systemctl start raspiframe-kiosk
 ```
 
-## 起動シーケンス
+## Startup Sequence
 
-1. **WiFi設定** - USBから`wifi.txt`を読み込み、自動接続
-2. **サービス起動** - Raspiframeバックエンドが起動
-3. **QR生成** - 設定画面へのQRコードを生成
-4. **Kioskモード** - Chromiumで全画面表示
+1. **WiFi Setup** - Reads `wifi.txt` from USB and auto-connects
+2. **Service Start** - Raspiframe backend launches
+3. **QR Generation** - Generates QR code for settings page access
+4. **Kiosk Mode** - Full-screen display via Chromium
 
-## 使い方
+## Usage
 
-### 初回セットアップ
-1. USBメモリを準備（wifi.txt必須）
-2. Raspberry Piに挿入して起動
-3. WiFi接続後、QRコードが表示される
-4. スマホでQRを読み取り、設定画面を開く
+### Initial Setup
+1. Prepare USB drive (wifi.txt required)
+2. Insert into Raspberry Pi and boot
+3. After WiFi connection, QR code appears on screen
+4. Scan QR code with smartphone to open settings page
 
-### NASからの写真読み込み
-1. 設定画面で「ENABLE NAS/DLNA」をチェック
-2. 「DISCOVER」ボタンでNASを検出
-3. 検出されたNASを選択して「MOUNT」
-4. 共有フォルダ名を入力（例：`photo_resized`）
-5. フォルダを選択して「Add This Folder」
-6. 「Save」で保存
+### Loading Photos from NAS
+1. Check "ENABLE DLNA ON NAS" in settings
+2. Click "CHECK DISK" button to discover NAS
+3. Select detected NAS and click "MOUNT"
+4. Enter shared folder name (e.g., `Multimedia`)
+5. Browse and select folders, click "ADD THIS FOLDER"
+6. Click "SAVE" to apply
 
-### USBメモリからの写真読み込み
-1. USBメモリに`Photo/`フォルダを作成
-2. 写真を配置
-3. 設定画面で「CHECK USB PHOTO」をクリック
-4. 「ADD TO SELECTION」で追加
-5. 「Save」で保存
+### Loading Photos from USB
+1. Create `Photo/` folder on USB drive
+2. Place images in folder
+3. Click "CHECK USB PHOTO" in settings
+4. Folders are automatically detected
+5. Click "SAVE" to apply
 
-### 表示設定
-- **Display (ms)**: 各写真の表示時間
-- **Fade (ms)**: フェード効果の時間
-- **Margin %**: 画面の余白
-- **Ken Burns**: ズーム効果のON/OFF
-- **Caption**: EXIF情報表示のON/OFF
-- **Timezone**: タイムゾーン設定
+### Display Settings
+- **Display (ms)**: Duration for each photo
+- **Fade (ms)**: Fade effect duration
+- **Margin %**: Screen margins
+- **Ken Burns**: Zoom effect ON/OFF
+- **Caption**: EXIF information display ON/OFF
+- **Timezone**: Timezone setting
 
-## 操作方法
+## Controls
 
-### キーボード
-- `←/→` - 前/次の写真
-- `Space` - 一時停止/再生
-- `O` - 日付オーバーレイ表示
+### Keyboard
+- `←/→` - Previous/Next photo
+- `Space` - Pause/Resume
+- `O` - Toggle date overlay
 
-### ロータリーエンコーダー
-- 回転（左/右） - 日付単位でスクラブ
-- 押し込み - QRコード表示
+### Rotary Encoder
+- Rotate (left/right) - Scrub by date
+- Push - Display QR code
 
-## API仕様
+## API Specification
 
-### DLNA関連
-- `GET /api/dlna/discover` - DLNAサービス検出
-- `GET /api/dlna/status` - マウント状態確認
-- `POST /api/dlna/mount` - マウント実行
-- `POST /api/dlna/unmount` - アンマウント
+### DLNA Endpoints
+- `GET /api/dlna/discover` - Discover DLNA services
+- `GET /api/dlna/status` - Check mount status
+- `POST /api/dlna/mount` - Mount share
+- `POST /api/dlna/unmount` - Unmount share
 
-### USB関連
-- `GET /api/usb/photo` - USBフォトフォルダ情報
+### USB Endpoints
+- `GET /api/usb/photo` - USB photo folder information
 
-### 設定関連
-- `GET /api/config` - 設定取得
-- `POST /api/config` - 設定保存
-- `GET /api/selection` - 選択フォルダ取得
-- `POST /api/selection` - 選択フォルダ保存
+### Settings Endpoints
+- `GET /api/config` - Get configuration
+- `POST /api/config` - Save configuration
+- `GET /api/selection` - Get selected folders
+- `POST /api/selection` - Save selected folders
 
-### プレイリスト
-- `GET /api/playlist` - 画像一覧取得
-- `GET /api/events` - SSEイベントストリーム
+### Playlist
+- `GET /api/playlist` - Get image list
+- `GET /api/events` - SSE event stream
 
-## ファイル構成
+## File Structure
 
 ```
-raspiframe/
+Superphotoframe/
 ├── app/
-│   └── main.py              # メインアプリケーション
+│   └── main.py              # Main application
 ├── static/
-│   ├── player.html          # プレイヤー画面
-│   ├── settings.html        # 設定画面
-│   ├── logo.png             # ロゴ画像
-│   ├── settinglogo.png      # 設定画面ロゴ
-│   └── qr2.png             # QRコード（自動生成）
+│   ├── player.html          # Player screen
+│   ├── settings.html        # Settings screen
+│   ├── logo.png             # Logo image
+│   ├── settinglogo.png      # Settings logo
+│   └── qr2.png             # QR code (auto-generated)
 ├── data/
-│   ├── config.json.sample  # 設定ファイルサンプル
-│   └── selection.json.sample # 選択フォルダサンプル
-├── rotary.py               # ロータリーエンコーダー
-├── setup_dlna.sh           # セットアップスクリプト
-├── setup_wifi_from_usb.py  # WiFi設定スクリプト
-├── startup_pipeline.sh     # 起動パイプライン
-├── usb-mount.sh            # USB自動マウントスクリプト
-├── usb-unmount.sh          # USB自動アンマウントスクリプト
-├── 99-usb-mount.rules      # udevルール
-├── requirements.txt        # Python依存パッケージ
-├── wifi.txt.sample         # WiFi設定サンプル
-├── credentials.txt.sample  # 認証情報サンプル
-└── README.md               # このファイル
+│   ├── config.json.sample  # Configuration sample
+│   └── selection.json.sample # Selection sample
+├── rotary.py               # Rotary encoder handler
+├── setup_dlna.sh           # Setup script
+├── setup_wifi_from_usb.py  # WiFi configuration script
+├── startup_pipeline.sh     # Startup pipeline
+├── usb-mount.sh            # USB auto-mount script
+├── usb-unmount.sh          # USB auto-unmount script
+├── 99-usb-mount.rules      # udev rules
+├── requirements.txt        # Python dependencies
+├── wifi.txt.sample         # WiFi configuration sample
+├── credentials.txt.sample  # Credentials sample
+└── README.md               # This file
 ```
 
-**注意**: 
-- `raspiframe.service`と`raspiframe-kiosk.service`は`setup_dlna.sh`によって自動生成されます
-- `data/config.json`と`data/selection.json`は初回起動時に自動生成されます
+**Note**: 
+- `raspiframe.service` and `raspiframe-kiosk.service` are auto-generated by `setup_dlna.sh`
+- `data/config.json` and `data/selection.json` are auto-generated on first run
 
-## トラブルシューティング
+## Troubleshooting
 
-### WiFi接続できない
+### WiFi Connection Failed
 ```bash
-# ログ確認
+# Check logs
 tail -f /var/log/raspiframe_startup.log
 
-# 手動設定
+# Manual setup
 sudo python3 setup_wifi_from_usb.py
 ```
 
-### NASマウント失敗
+### NAS Mount Failed
 ```bash
-# サービスログ確認
+# Check service logs
 sudo journalctl -u raspiframe -f
 
-# credentials.txtの確認
-cat /media/usb/credentials.txt
+# Verify credentials
+cat /mnt/usb/credentials.txt
 
-# 手動マウントテスト
+# Test manual mount
 sudo mount -t cifs //192.168.1.100/share /mnt/dlna/test \
   -o username=user,password=pass
 ```
 
-### 画面が表示されない
+### Display Not Showing
 ```bash
-# Kioskサービス確認
+# Check kiosk service
 sudo systemctl status raspiframe-kiosk
 
-# Chromiumプロセス確認
+# Check Chromium process
 ps aux | grep chromium
 
-# 手動起動
+# Manual start
 DISPLAY=:0 chromium-browser --kiosk http://localhost:8000/static/player.html
 ```
 
-### QRコードが表示されない
+### QR Code Not Displaying
 ```bash
-# QRファイル確認
-ls -la /home/jd/raspiframe/static/qr2.png
+# Check QR file
+ls -la ~/raspiframe/static/qr2.png
 
-# サービス再起動
+# Restart service
 sudo systemctl restart raspiframe
 ```
 
-## セキュリティに関する注意
+## Security Notice
 
-⚠️ **重要**: 
-- `wifi.txt`と`credentials.txt`は平文で保存されます
-- USBメモリは物理的に安全に保管してください
-- 本番環境では暗号化を検討してください
-- 使用後はUSBメモリを取り外すことを推奨します
+⚠️ **Important**: 
+- `wifi.txt` and `credentials.txt` are stored in plain text
+- Keep USB drive physically secure
+- Consider encryption for production use
+- Recommend removing USB drive after setup
 
-## ライセンス
+## License
 
-このプロジェクトは **CC BY-NC 4.0**（Creative Commons Attribution-NonCommercial 4.0 International）ライセンスの下で公開されています。
+This project is licensed under **CC BY-NC 4.0** (Creative Commons Attribution-NonCommercial 4.0 International).
 
-- ✅ 個人・家族での使用は自由
-- ✅ 改変・再配布OK（非営利目的）
-- ✅ クレジット表示が必要
-- ❌ 商用利用は禁止
+- ✅ Free for personal and family use
+- ✅ Modification and redistribution allowed (non-commercial)
+- ✅ Attribution required
+- ❌ Commercial use prohibited
 
-詳細: https://creativecommons.org/licenses/by-nc/4.0/
+Details: https://creativecommons.org/licenses/by-nc/4.0/
 
-商用利用をご希望の場合は、作者までお問い合わせください。
+For commercial use inquiries, please contact the author.
 
-## 作者
+## Author
 
-**TO-Lab** (github.com/tolab125/SuperPhotoframe)
+**TO-Lab** (github.com/tolab125/Superphotoframe)
 
 ©2025 TO-Lab Open Source
 
-## 更新履歴
+## Changelog
 
-### v2.0 (2025-10)
-- DLNA自動検出機能追加
-- USBからのWiFi設定機能追加
-- USBフォトフォルダ機能追加
-- NAS ON/OFF機能追加
-- 起動パイプライン実装
-
-### v1.0
-- 初期リリース
-
+### v1.0 (2025-10)
+- DLNA auto-discovery and mount
+- USB WiFi auto-configuration
+- USB photo folder support
+- NAS ON/OFF toggle
+- Startup pipeline implementation
+- iOS-like UI design
+- Portrait mode support
+- Notification disabling
+- Initial release
