@@ -1,0 +1,8 @@
+# WiFi Configuration File for Raspiframe
+# Place this file in the root of your USB drive as "wifi.txt"
+# Format: key=value (one per line)
+
+ssid=YourWiFiNetworkName
+password=YourWiFiPassword
+country=JP
+

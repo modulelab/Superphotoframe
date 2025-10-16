@@ -1,0 +1,95 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SUPER PHOTOFRAME START</title>
+<style>
+  :root { --bg:#000; }
+  html,body{margin:0;height:100%;background:var(--bg);font:16px/1.4 system-ui}
+  .wrap{position:fixed;inset:0;display:grid;place-items:center}
+  img{max-width:90vw;max-height:90vh;opacity:0;transition:opacity 1.2s}
+  .show{opacity:1}
+  .hint{position:fixed;bottom:18px;width:100%;text-align:center;color:#bbb;font-size:12px}
+
+ /* QR Overlay styles */
+  .qr-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000; /* */
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity .4s ease;
+  }
+  .qr-overlay.show { display: block; opacity: 1; }
+  .qr-overlay.hiding { opacity: 0; }
+
+  .background-img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 90vw;
+    max-height: 90vh;
+    z-index: 1;
+    opacity: 1;
+    display: block;
+  }
+
+  .qr-overlay-img {
+    position: absolute;
+    top: 450px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    width: 200px;
+    height: auto;
+    opacity: 1;
+    display: block;
+  }
+
+
+
+html, body {
+  cursor: none;
+}
+
+</style>
+<div class="wrap">
+  <img id="screen" src="/static/logo.png" alt="Logo">
+  <div class="hint">Scan to open settings</div>
+</div>
+
+
+<!-- QR Overlay with background image -->
+<div class="qr-overlay" id="qr" aria-hidden="true">
+  <img src="/static/logo2.png" alt="Background" class="background-img">
+  <img src="/static/qr2.png" alt="QR code overlay" class="qr-overlay-img">
+</div>
+
+
+
+
+<script>
+const img = document.getElementById('screen');
+const qrOverlay = document.getElementById('qr');
+
+
+// 1) ロゴをフェードイン
+requestAnimationFrame(()=> img.classList.add('show'));
+
+// 2) 4秒後にQRへ切替
+setTimeout(()=>{
+  img.classList.remove('show');
+  img.addEventListener('transitionend', ()=>{
+    // ロゴを非表示にしてQRオーバーレイを表示
+    img.style.display = 'none';
+    qrOverlay.classList.add('show');
+  }, { once:true });
+}, 4000);
+
+
+// 3) 9秒後にプレイヤーへ
+setTimeout(()=>{
+  location.href = '/static/player.html';
+}, 13000);
+</script>

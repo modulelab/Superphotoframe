@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>フォトフレーム Player</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{
+    margin:0;height:100%;overflow:hidden;
+    color:#000;font:16px/1.45 system-ui;
+    background:#fafafa;
+    cursor:none;
+  }
+
+
+
+  :root{
+    --fade: 3s;          /* フェード秒数（JSで上書き） */
+    --zoomdur: 12s;      /* Ken Burns用（JSで上書き） */
+    --m: 5vmin;          /* 常に最低5vmin（JSで max(5vmin, 設定%) に上書き） */
+    --bg: #fafafa;
+    --radius: 12px;
+    --frame-h: 88vh;  /* ← ここで枠の高さを固定（例: 85%） */
+  }
+
+  .margin-wrap{
+    position:absolute;inset:0;width:100%;height:100%;
+    padding:var(--m);display:grid;place-items:center;
+    background:transparent;z-index:1;
+  }
+
+  .photo{
+    width:100%;height:100%;
+    object-fit:contain;object-position:50% 50%;
+    transition: opacity var(--fade,1s) linear, transform var(--zoomdur,12s) linear;
+    opacity:0;pointer-events:none;z-index:1;background:transparent;
+    will-change: opacity, transform;
+  }
+  .show{opacity:1}
+
+  .center{object-position:50% 50%}
+  .bottom{object-position:50% 100%}
+  .top{object-position:50% 0%}
+
+  .hud{
+    position:fixed;left:12px;bottom:12px;
+    opacity:.7;font-size:12px;color:#000;user-select:none;
+    transition: opacity 2s;
+  }
+  .hud code{background:#eaeaea;border-radius:6px;padding:.1em .35em}
+
+  .badge{display:none}
+
+/* letterbox 内のオーバーレイとして配置 */
+.caption{
+  position:absolute;
+  left:0; right:0; bottom:25px;
+  padding:0 30px;
+  display:none;
+  justify-content:space-between;  /* ← 左右に配置 */
+  align-items:flex-end;
+  pointer-events:none;
+  z-index:10;
+  color:#000;
+  font:12px/1.2 system-ui, sans-serif;
+  text-shadow: 0 0 2px rgba(255,255,255,0.6);
+  letter-spacing: 0.2em;  /* ← 文字間を広げる */
+}
+
+
+/* 小さめ画面で少し詰めるなら（任意） */
+@media (max-height: 600px){
+  .caption{ bottom:8px; padding:0 12px; font-size:11px; }
+}
+
+
+
+/* 日付スクラブ・オーバーレイ（フェード対応） */
+
+
+.scrub-overlay{
+  position:fixed; inset:0;
+  display:grid; place-items:center;
+  background:rgba(0,0,0,.7);
+  color:#fff; z-index:9999;
+  text-align:center; padding:24px;
+
+/* デフォルトフォントを DIN Next に */
+  font-family: "DIN Next LT Pro", sans-serif;
+
+  opacity:0; transition:opacity .35s ease;
+}
+.scrub-overlay.show{
+  opacity:1;
+}
+
+
+.scrub-overlay .date {
+  font-size: 63px;
+  letter-spacing: .04em;
+
+  /* Italic を指定 */
+  font-style: italic;
+}
+
+.scrub-overlay .hint {
+  margin-top: 10px;
+  opacity: .8;
+  font-size: 22px;
+  letter-spacing: 0.2em;  /* ← 少し広げる */
+
+  /* Bold を指定 */
+  font-weight: 700;
+}
+
+
+/* === QR overlay === */
+.qr-overlay {
+  display:none;
+  position:fixed; inset:0;
+  background:#000;         /* ← 背景を完全な黒に */
+  place-items:center;
+  z-index:10000;
+
+  opacity:0;
+  transition: opacity .4s ease;
+}
+.qr-overlay.show { display:grid; opacity:1; }
+.qr-overlay.hiding { opacity:0; }
+
+.qr-container {
+  position: relative;
+  display: inline-block;
+}
+
+.qr-base, .qr-overlay-img {
+  width: min(64vmin, 90vw);
+  height: auto;
+  image-rendering: auto;
+}
+
+.qr-base {
+  position: relative;
+  z-index: 1;
+  max-width: 90vw;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+  image-rendering: auto;
+}
+
+.qr-overlay-img {
+  position: absolute;
+  top: 400px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  width: 200px;
+  height: auto;
+}
+
+
+
+
+
+.busy-overlay{
+  position:fixed; inset:0; display:none; place-items:center;
+  background:#000; z-index:10000;
+  letter-spacing: 0.2em;  /* ← 文字間を広げる */
+}
+.busy-overlay.show{ display:grid; }
+.busy-box{ color:#fff; text-align:center; font:600 18px/1.4 system-ui, sans-serif; }
+.busy-msg{ margin-top:10px; letter-spacing:.02em; }
+.busy-spinner{
+  width:36px; height:36px; border-radius:50%;
+  border:3px solid rgba(255,255,255,.35);
+  border-top-color:#fff; margin:0 auto;
+  animation: busyspin 1s linear infinite;
+}
+@keyframes busyspin { to { transform: rotate(360deg); } }
+
+
+
+/* 画面全体。上下の黒帯はここで作る */
+.viewport{
+  position:fixed; inset:0;
+  width:100vw; height:100vh;
+  background:#000;               /* 黒帯の色 */
+  display:grid; place-items:center;
+}
+
+/* 見せたい“窓”の領域（ここにだけ写真を表示） */
+.letterbox{
+  width:100vw;
+  height:var(--frame-h,85vh);    /* ← 黒帯の厚み調整は --frame-h だけでOK */
+  max-height:100vh;
+  position:relative;
+  overflow:hidden;               /* 枠外は見せない */
+  background:#fafafa;               /* 枠内の下地も黒で統一（好みで #111 等に） */
+}
+
+/* 既存の .stage はこのままでOK（位置は letterbox 内で絶対配置） */
+.stage{ position:absolute; inset:0; }
+
+
+
+</style>
+</head>
+<body>
+
+<div class="viewport">
+  <div class="letterbox">
+    <div class="stage" id="stage"></div>
+
+    <!-- ↓ これを letterbox の中へ -->
+    <div class="caption" id="caption">
+      <span class="cap-left"></span>
+      <span class="cap-right"></span>
+    </div>
+  </div>
+</div>
+
+
+  <div class="hud" id="hud">←/→ PREV/NEXT　<code>SPACE</code> PAUSE</div>
+
+<div class="busy-overlay" id="busy">
+  <div class="busy-box">
+    <div class="busy-spinner"></div>
+    <div class="busy-msg" id="busyMsg">BUILDING INDEX...</div>
+  </div>
+</div>
+
+  <div class="scrub-overlay" id="scrub">
+    <div>
+      <div class="date" id="scrubDate">YYYY-MM-DD</div>
+      <div class="hint">SHIFT IN TIME.</div>
+    </div>
+  </div>
+
+
+  <!-- ★ QR Overlay をここに追加 -->
+  <div class="qr-overlay" id="qr" aria-hidden="true">
+
+    <div class="qr-container">
+      <img src="/static/qr.png" alt="QR code" class="qr-base">
+      <img src="/static/qr2.png" alt="QR code overlay" class="qr-overlay-img">
+    </div>
+
+  </div>
+  <!-- ここまで -->
+
+
+  <div class="badge" id="badge"></div>
+
+
+<script>
+/* ===== ランタイム設定 ===== */
+let IMAGES=[], DISPLAY_MS=8000, FADE_MS=3000, KEN_BURNS=false;
+
+/* --- 日付スクラブ用 --- */
+let scrubDate = new Date();   // 現在の在庫日付
+let scrubTimeout = null;      // オーバーレイ消去タイマー
+let qrHideTimer = null;       // QR自動クローズ
+
+// 在庫日インデックス
+let dateList=[];                       // [dayKey, ...] (昇順)
+let dateToFirstIdx=new Map();          // dayKey -> 写真index
+let dayKeyToListIdx=new Map();         // dayKey -> dateList内の位置
+let scrubIdx=0;                        // 現在の在庫日インデックス
+
+
+document.documentElement.style.setProperty('--fade',(FADE_MS/1000)+'s');
+document.documentElement.style.setProperty('--zoomdur',Math.max(0,DISPLAY_MS-100)/1000+'s');
+
+const stage=document.getElementById('stage');
+const hud=document.getElementById('hud');
+
+let photoIdx=0, paused=false, timer=null;
+let currentNode=null, fadingNode=null, lastLayout=null;
+
+/* HUDを数秒後にフェードアウト */
+setTimeout(()=>{ hud.style.opacity=0; }, 8000);
+
+/* ===== レイアウト選択 ===== */
+const BASE_WEIGHTS={1:0.34,2:0.33,3:0.33};
+const REPEAT_PROB_FOR_123=0.30;
+
+function chooseWeighted(weights){
+  const ent=Object.entries(weights);
+  const sum=ent.reduce((s,[,w])=>s+w,0);
+  let r=Math.random()*sum;
+  for(const [k,w] of ent){ r-=w; if(r<=0) return Number(k); }
+  return Number(ent[ent.length-1][0]);
+}
+function nextLayout(){
+  let chosen;
+  if(lastLayout){
+    if(Math.random()<REPEAT_PROB_FOR_123){ chosen=lastLayout; }
+    else{
+      const w={...BASE_WEIGHTS,[lastLayout]:0};
+      chosen=chooseWeighted(w);
+    }
+  }else{
+    chosen=chooseWeighted(BASE_WEIGHTS);
+  }
+  lastLayout=chosen;
+  return chosen;
+}
+
+/* ===== ノード生成 ===== */
+function makeNode(src, layout){
+  const wrap=document.createElement('div');
+  wrap.className='margin-wrap';
+  const img=document.createElement('img');
+  img.src=src; img.className='photo';
+  if(layout===1) img.classList.add('center');
+  if(layout===2) img.classList.add('bottom');
+  if(layout===3) img.classList.add('top');
+  if(KEN_BURNS){
+    img.style.transform='scale(1.02)';
+    requestAnimationFrame(()=> img.style.transform='scale(1.0)');
+  }else{
+    img.style.transform='none';
+  }
+  wrap.appendChild(img);
+  requestAnimationFrame(()=> img.classList.add('show'));
+  return wrap;
+}
+function getInnerImg(node){ return node.querySelector('.photo'); }
+function fadeOutAndRemove(node){
+  if(!node) return;
+  const img=getInnerImg(node);
+  if(!img){ node.remove(); return; }
+  if(getComputedStyle(img).opacity==='0'){ node.remove(); return; }
+  img.classList.remove('show');
+  let done=false;
+  const cleanup=()=>{ if(done) return; done=true; node.remove(); };
+  const onEnd=(ev)=>{ if(ev.propertyName==='opacity'){ img.removeEventListener('transitionend',onEnd); cleanup(); } };
+  img.addEventListener('transitionend',onEnd);
+  setTimeout(cleanup,FADE_MS+150);
+}
+
+/* ===== 日付インデックス ===== */
+function dayKeyFromTs(ts){
+  const d = new Date(ts); d.setHours(0,0,0,0); return d.getTime();
+}
+function buildDateIndex(){
+  dateList=[]; dateToFirstIdx.clear(); dayKeyToListIdx.clear();
+  for(let i=0;i<IMAGES.length;i++){
+    const dk = IMAGES[i].dayKey;
+    if(!dateToFirstIdx.has(dk)){
+      dateToFirstIdx.set(dk, i);
+      dateList.push(dk);
+    }
+  }
+  dateList.sort((a,b)=>a-b);
+  for(let i=0;i<dateList.length;i++){ dayKeyToListIdx.set(dateList[i], i); }
+}
+
+/* ===== 表示制御 ===== */
+function show(i){
+  if(!IMAGES.length) return;
+  const item = IMAGES[i % IMAGES.length];
+  const src  = item.src;
+  const layout = nextLayout();
+  const nextNode = makeNode(src, layout);
+
+  // ===== 在庫日インデックスを追従 =====
+  try {
+    const shownDayKey = (item.day_key || dayKeyFromTs(item.ts));
+    if (window.dayKeyToListIdx && dayKeyToListIdx.has(shownDayKey)) {
+      // scrubDx, scrubDate は上位スコープで宣言しておく
+      scrubDx   = dayKeyToListIdx.get(shownDayKey);
+      scrubDate = new Date(shownDayKey);
+    }
+  } catch (e) {
+    console.error("dayKey handling error:", e);
+  }
+
+  // ===== ノード入れ替え =====
+  if(currentNode) currentNode.style.zIndex = 1;
+  nextNode.style.zIndex = 2;
+  stage.appendChild(nextNode);
+  if(fadingNode){ try { fadingNode.remove(); } catch {} }
+  if(currentNode){ fadingNode = currentNode; fadeOutAndRemove(fadingNode); }
+  currentNode = nextNode;
+
+// ===== キャプション更新 =====
+const cap = document.getElementById('caption');
+if (cap) {
+  if (window.SHOW_CAPTION) {
+    const left  = cap.querySelector('.cap-left');
+    const right = cap.querySelector('.cap-right');
+    left.textContent  = item.model || '';
+    right.textContent = item.dayKey || '';   // ← サーバ計算済みをそのまま使う
+    cap.style.display = 'flex';
+  } else {
+    cap.style.display = 'none';
+  }
+}
+}
+
+
+function step(d=+1){
+  if(!IMAGES.length) return;
+  photoIdx=(photoIdx+d+IMAGES.length)%IMAGES.length;
+  show(photoIdx);
+}
+function autoplay(){
+  if(timer) clearInterval(timer);
+  timer=setInterval(()=>{ if(!paused) step(+1); }, DISPLAY_MS);
+}
+
+/* ===== busy overlay ===== */
+function busyShow(msg='Building index…'){
+  const o = document.getElementById('busy');
+  const m = document.getElementById('busyMsg');
+  if (!o) return;
+  if (m) m.textContent = msg;
+  o.classList.add('show');
+}
+function busyHide(){
+  const o = document.getElementById('busy');
+  if (o) o.classList.remove('show');
+}
+
+/* ===== 設定・プレイリスト読み込み ===== */
+async function fetchConfig(){
+  try{
+    const r=await fetch('/api/config'); const c=await r.json();
+    DISPLAY_MS=c.display_ms||8000;
+    FADE_MS=c.fade_ms||3000;
+    const inputMargin=parseFloat((c.margin_rate||'5').toString());
+    const finalMargin=isNaN(inputMargin)?5:Math.max(5,inputMargin);
+    document.documentElement.style.setProperty('--m', finalMargin+'vmin');
+    KEN_BURNS=!!c.ken_burns;
+    window.SHOW_CAPTION = !!c.show_caption;
+    document.documentElement.style.setProperty('--fade',(FADE_MS/1000)+'s');
+    document.documentElement.style.setProperty('--zoomdur',Math.max(0,DISPLAY_MS-100)/1000+'s');
+    autoplay();
+  }catch(e){ console.error(e); }
+}
+async function fetchPlaylist(){
+  busyShow('Building index…');
+  try{
+    const r = await fetch('/api/playlist');
+    const j = await r.json();
+    IMAGES = (j.images || [])
+      .map(it => {
+        if (!it || !it.path || typeof it.ts !== 'number') return null;
+        const ms = Math.floor(it.ts * 1000);
+        const dk = (it.day_key || dayKeyFromTs(ms));
+        return {
+          src: "/files?path=" + encodeURIComponent(it.path),
+          ts: ms, dayKey: dk,
+          model: (it.model || "").trim(),
+          exposure: (it.exposure || "").trim()
+        };
+      })
+      .filter(Boolean)
+      .sort((a,b)=>a.ts-b.ts);
+    buildDateIndex();
+    if(IMAGES.length){
+      const dk0 = IMAGES[0].dayKey;
+      scrubIdx = dayKeyToListIdx.get(dk0) ?? 0;
+      scrubDate = new Date(dk0);
+    }
+    photoIdx = 0;
+  }catch(e){ console.error(e); }
+  finally{ busyHide(); }
+}
+
+/* ===== SSE ===== */
+
+
+
+function subscribeEvents(){
+  const es = new EventSource('/api/events');
+  es.onmessage = async (ev)=>{
+    let typ=null;
+    try{ const o = JSON.parse(ev.data); typ = o?.type || null; }catch{}
+    if(!typ || typ==='ping') return;
+
+   if(typ==='config_changed'){
+     await fetchConfig();
+     if(IMAGES.length){ show(photoIdx); }
+
+   }
+
+    if(typ==='selection_changed'){
+      await fetchPlaylist();
+      if(IMAGES.length){ photoIdx = 0; show(photoIdx); }
+    }
+  };
+  es.onerror = ()=>{ try{es.close();}catch{}; setTimeout(subscribeEvents,2000); };
+}
+
+
+
+/* ===== スクラブオーバーレイ ===== */
+function showScrubOverlay(){
+  const el=document.getElementById('scrub');
+  const dateEl=document.getElementById('scrubDate');
+  if(!el||!dateEl) return;
+  dateEl.textContent=scrubDate.toISOString().slice(0,10);
+  el.classList.add('show');
+  if(scrubTimeout) clearTimeout(scrubTimeout);
+  scrubTimeout=setTimeout(()=>{ el.classList.remove('show'); },3000);
+}
+
+/* ===== 在庫日スクラブ ===== */
+function nudgeDays(step){
+  if(!dateList.length) return;
+  const wrap=true;
+  let nextIdx = scrubIdx + (step>0?+1:-1);
+  if(wrap){ nextIdx=(nextIdx+dateList.length)%dateList.length; }
+  else { nextIdx=Math.max(0,Math.min(dateList.length-1,nextIdx)); }
+  const nextDayKey = dateList[nextIdx];
+  scrubIdx = nextIdx;
+  scrubDate = new Date(nextDayKey);
+  showScrubOverlay();
+  const idx = dateToFirstIdx.get(nextDayKey);
+  if(idx!=null && idx!==photoIdx){
+    requestAnimationFrame(()=>{ photoIdx=idx; show(photoIdx); });
+  }
+}
+
+/* ===== QR表示 ===== */
+function showQR(){
+  const qr=document.getElementById('qr'); if(!qr) return;
+  if(qrHideTimer){ clearTimeout(qrHideTimer); qrHideTimer=null; }
+  qr.classList.remove('hiding'); qr.classList.add('show');
+  qrHideTimer=setTimeout(()=>{
+    qr.classList.add('hiding');
+    setTimeout(()=>{ qr.classList.remove('show','hiding'); qrHideTimer=null; },400);
+  },3000);
+}
+
+/* ===== キー操作 ===== */
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'){ nudgeDays(+1); }
+  if(e.key==='ArrowLeft'){  nudgeDays(-1); }
+  if(e.key===' '){ paused=!paused; }
+  if(e.key.toLowerCase()==='o'){ showScrubOverlay(); }
+});
+
+/* ===== Rotary WebSocket ===== */
+(function setupRotaryWS(){
+  const WS_URL=(location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws/rotary';
+  let ws, retryMs=1000;
+  const dbg=document.createElement('div');
+  dbg.style.cssText='position:fixed;left:12px;bottom:36px;font:12px/1 system-ui;'+
+    'background:rgba(0,0,0,.6);color:#0f0;padding:4px 6px;border-radius:6px;z-index:99999';
+  dbg.textContent='WS: connecting...'; document.body.appendChild(dbg);
+  const setDbg=(t,c='#0f0')=>{ dbg.textContent=t; dbg.style.color=c; };
+  function onMessage(ev){
+    const msg=String((ev.data||'')).trim().toLowerCase();
+    setDbg('WS msg: '+msg);
+    if(msg.includes('left')){ nudgeDays(-1); return; }
+    if(msg.includes('right')){ nudgeDays(+1); return; }
+    if(msg.includes('push')){ showQR(); return; }
+  }
+  function connect(){
+    try{
+      ws=new WebSocket(WS_URL);
+      ws.onopen=()=>{ setDbg('WS: OPEN '+WS_URL); retryMs=1000; };
+      ws.onmessage=onMessage;
+      ws.onclose=(ev)=>{ setDbg('WS: CLOSE '+ev.code,'#ff0'); setTimeout(connect,retryMs); retryMs=Math.min(retryMs*1.5,10000); };
+      ws.onerror=()=>{ setDbg('WS: ERROR','#f66'); try{ws.close();}catch{}; };
+    }catch(e){ setDbg('WS: EXC','#f66'); setTimeout(connect,retryMs); retryMs=Math.min(retryMs*1.5,10000); }
+  }
+  connect();
+})();
+
+/* ===== 起動順 ===== */
+(async function init(){
+  document.documentElement.style.setProperty('--m','5vmin');
+  await fetchConfig();
+  await fetchPlaylist();
+  if(IMAGES.length>0){
+    photoIdx=0;
+    scrubDate=new Date(IMAGES[0].ts);
+    show(photoIdx);
+    autoplay();
+  }
+  subscribeEvents();
+})();
+</script>
+
+</body>
+</html>

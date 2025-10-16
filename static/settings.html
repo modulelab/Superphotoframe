@@ -1,0 +1,878 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>SUPER PHOTOFRAME SETTINGS</title>
+<style>
+  :root{--bg:#fafafa;--panel:#fff;--border:#e6e6e6;--text:#111;--muted:#666;--accent:#2563eb;--accent-ghost:#e8f0ff}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:16px/1.5 system-ui}
+  header{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--panel);position:sticky;top:0;z-index:10}
+  h1{font-size:18px;margin:0}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  button,.btn{appearance:none;border:1px solid var(--border);background:#fff;border-radius:10px;padding:.5em .9em;cursor:pointer}
+  .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn-ghost{background:#fff;border:1px solid var(--accent);color:var(--accent)}
+
+  .container{display:grid;grid-template-columns:minmax(320px,42%) 1fr;gap:16px;padding:16px}
+  .stack{display:grid;grid-template-rows:auto auto;gap:16px}
+  @media (max-width:900px){.container{grid-template-columns:1fr}.stack{grid-template-rows:auto auto}}
+
+  fieldset{border:none;border-radius:12px;background:#fff;padding:14px;position:relative;padding-top:28px;margin-top:32px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+  legend{padding:0;position:absolute;top:-25px;left:0;background:var(--bg);font-size:13px;font-weight:600}
+  .toolbar{display:flex;gap:8px;align-items:center;margin-bottom:4px;flex-wrap:wrap}
+  .path{font-family:ui-monospace,Menlo,monospace;font-size:13px;padding:.35em 0}
+  ul{list-style:none;margin:0;padding:0;border:1px solid var(--border);border-radius:10px;background:#fff;overflow:auto;max-height:52vh}
+  li{padding:8px 10px;border-bottom:1px solid #f1f1f1;display:flex;align-items:center;gap:8px;cursor:pointer}
+  li:last-child{border-bottom:none}
+  li:hover{background:#f7f9ff}
+  li.back-btn{font-size:28px;font-weight:600;padding:6px 14px;background:#f7f9ff;color:var(--accent)}
+  .muted{color:#666}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+  .thumb{width:100%;aspect-ratio:1/1;object-fit:cover;border:1px solid var(--border);border-radius:8px}
+  .panel-title{display:flex;align-items:center;justify-content:space-between;margin:0 0 8px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{border:1px solid var(--border);border-radius:999px;padding:.25em .6em;background:#fff;font-size:12px}
+
+  .toast{position:fixed;right:14px;bottom:14px;background:#111;color:#fff;padding:.6em .9em;border-radius:10px;opacity:0;transform:translateY(6px);transition:.25s;z-index:9999}
+  .toast.show{opacity:.95;transform:none}
+  .loading{display:inline-block;width:16px;height:16px;border:2px solid #cdd3e0;border-top-color:#2563eb;border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* Modal Dialog */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;z-index:10000;animation:fadeIn .2s}
+  .modal-content{background:#fff;border-radius:12px;padding:24px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:slideUp .3s}
+  @keyframes fadeIn{from{opacity:0}}
+  @keyframes slideUp{from{opacity:0;transform:translateY(20px)}}
+
+  header h1,
+  button,
+  .btn,
+  legend,
+  .chip,
+  .panel-title strong,
+  fieldset label,
+  .toast {
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .path,
+  #folderMeta,
+  #previewCount,
+  #chosen li span {
+    text-transform: none;
+    letter-spacing: normal;
+  }
+
+  /* Toggle Switch */
+  .toggle-switch{position:relative;display:inline-block;width:51px;height:31px}
+  .toggle-switch input{opacity:0;width:0;height:0}
+  .toggle-slider{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:31px;transition:.3s}
+  .toggle-slider:before{position:absolute;content:"";height:27px;width:27px;left:2px;bottom:2px;background:#fff;border-radius:50%;transition:.3s}
+  input:checked + .toggle-slider{background:#34c759}
+  input:checked + .toggle-slider:before{transform:translateX(20px)}
+</style>
+
+<header>
+  <h1>SUPERPHOTOFRAME</h1>
+</header>
+
+<div class="container">
+  <!-- Browse -->
+  <fieldset>
+    <legend>Add folder</legend>
+    
+    <!-- USB Photo フォルダセクション -->
+    <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #e6e6e6">
+      <div class="toolbar">
+        <button id="usbPhotoCheck" class="btn btn-ghost">💾 CHECK USB PHOTO</button>
+        <span id="usbPhotoStatus" class="muted" style="margin-left:auto;text-align:right;font-weight:600"></span>
+      </div>
+    </div>
+    
+    <!-- DLNA検出セクション -->
+    <div style="margin-bottom:12px;padding-top:4px;padding-bottom:12px;border-bottom:1px solid #e6e6e6">
+      <div style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:14px;font-weight:500">ENABLE DLNA ON NAS</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="dlnaEnabled">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div id="dlnaHelp" style="display:none;margin-bottom:10px;padding:8px;background:#f5f5f5;border-radius:6px;font-size:13px;line-height:1.4;color:#555">
+        Write the username and password for accessing the NAS into the credentials.txt file on the USB drive, then press CHECK DISK.
+      </div>
+      <div class="toolbar" style="align-items:center">
+        <button id="dlnaDiscover" class="btn btn-ghost">💾 CHECK DISK</button>
+        <span id="dlnaStatus" class="muted" style="margin-left:auto;text-align:right;font-weight:600"></span>
+      </div>
+      <ul id="dlnaList" style="max-height:120px;margin-top:8px;display:none"></ul>
+    </div>
+    
+    <div class="toolbar">
+      <span class="path" id="cwdText"></span>
+    </div>
+    <ul id="dirList" aria-label="Directory list" style="min-height:260px"></ul>
+    <div style="margin-top:10px">
+      <div style="margin-bottom:8px">
+        <span style="font-size:14px;font-weight:500">PREVIEW</span>
+      </div>
+      <div style="position:relative">
+        <div class="grid" id="preview" style="grid-template-columns:repeat(4,1fr)"></div>
+        <div id="previewCount" class="muted" style="position:absolute;bottom:8px;right:8px;background:rgba(255,255,255,0.9);padding:4px 8px;border-radius:4px;font-size:12px;font-weight:600"></div>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <button id="addThis" class="btn btn-ghost" style="width:100%;padding:12px">＋ ADD THIS FOLDER</button>
+    </div>
+  </fieldset>
+
+  <div class="stack">
+    <!-- Selected -->
+    <fieldset>
+      <legend>Added Folders (active for slideshow)</legend>
+      <p style="margin:0 0 12px 0;font-size:13px;line-height:1.5;color:#666">
+        Folders added and saved here will be applied to the slideshow. (Multiple Selection / Recurses Subfolders)
+      </p>
+      <ul id="chosen" style="min-height:180px"></ul>
+      <div id="selectionStatus" style="margin-top:10px;padding:8px;text-align:center;font-size:13px;border-radius:6px;display:none"></div>
+      <div style="margin-top:10px">
+        <button id="saveSel" class="btn btn-primary" style="width:100%;padding:12px">SAVE</button>
+        <div style="margin-top:8px;text-align:center">
+          <span id="saving" class="muted" style="display:none"><span class="loading"></span> Saving…</span>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Display settings -->
+    <fieldset>
+      <legend>Display Settings</legend>
+      <div style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:14px">DISPLAY (MS)</span>
+          <input id="display_ms" type="number" value="8000" min="500" step="100" style="width:110px;text-align:right;padding:8px;border:1px solid var(--border);border-radius:8px">
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:14px">FADE (MS)</span>
+          <input id="fade_ms" type="number" value="3000" min="100" step="100" style="width:110px;text-align:right;padding:8px;border:1px solid var(--border);border-radius:8px">
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:14px">MARGIN %</span>
+          <input id="margin_rate" type="text" value="5%" style="width:80px;text-align:right;padding:8px;border:1px solid var(--border);border-radius:8px">
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:14px">KEN BURNS</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="ken_burns">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:14px">CAPTION (MODEL / DATE)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="show_caption">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div style="margin-top:10px">
+        <button id="saveCfg" type="button" class="btn btn-primary" style="width:100%;padding:12px">SAVE DISPLAY SETTINGS</button>
+        <div style="margin-top:8px;text-align:center">
+          <span id="savingCfg" class="muted" style="display:none"><span class="loading"></span> Saving…</span>
+        </div>
+      </div>
+    </fieldset>
+
+
+
+
+<fieldset style="margin-bottom: 16px;">
+  <legend>System</legend>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <span style="font-size:14px">TIMEZONE</span>
+    <select id="tz" style="padding:8px;border:1px solid var(--border);border-radius:8px;background:#fff;text-align:right">
+      <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+      <option value="UTC">UTC</option>
+      <option value="America/Los_Angeles">America/Los_Angeles (PT)</option>
+      <option value="Europe/London">Europe/London (GMT)</option>
+      <option value="Asia/Shanghai">Asia/Shanghai (CST)</option>
+    </select>
+  </div>
+
+  <div style="margin-top:10px">
+    <button id="saveSys" class="btn btn-primary" style="width:100%;padding:12px">SAVE SYSTEM SETTINGS</button>
+    <div style="margin-top:8px;text-align:center">
+      <span id="savingSys" class="muted" style="display:none">
+        <span class="loading"></span> Saving…
+      </span>
+    </div>
+  </div>
+</fieldset>
+
+
+
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<!-- Share Folder Dialog -->
+<div id="shareFolderDialog" class="modal-overlay" style="display:none">
+  <div class="modal-content">
+    <h3 style="margin:0 0 16px;text-transform:uppercase;letter-spacing:.04em">MOUNT NAS</h3>
+    <div style="margin-bottom:12px">
+      <strong id="dialogNasName" style="font-size:16px"></strong>
+      <div id="dialogNasAddress" class="muted" style="font-size:13px;margin-top:4px"></div>
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="display:block;margin-bottom:6px;text-transform:uppercase;font-size:13px">
+        SHARE FOLDER NAME
+      </label>
+      <select 
+        id="shareFolderSelect" 
+        style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:8px"
+      >
+        <option value="Multimedia">Multimedia</option>
+        <option value="photo_resized">photo_resized</option>
+        <option value="mediashare_dlna">mediashare_dlna</option>
+        <option value="Photos">Photos</option>
+        <option value="photo">photo</option>
+        <option value="Public">Public</option>
+        <option value="share">share</option>
+        <option value="_custom">⚙️ Custom...</option>
+      </select>
+      <input 
+        type="text" 
+        id="shareFolderInput" 
+        placeholder="Enter custom share name" 
+        style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;display:none"
+      >
+      <div class="muted" style="font-size:12px;margin-top:6px">
+        Select from common names or enter a custom one
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button id="dialogCancel" class="btn">CANCEL</button>
+      <button id="dialogMount" class="btn btn-primary">MOUNT</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+
+const dirList = $("#dirList"),
+      preview = $("#preview"),
+      chosen  = $("#chosen"),
+      dlnaList = $("#dlnaList"),
+      dlnaStatus = $("#dlnaStatus"),
+      usbPhotoStatus = $("#usbPhotoStatus");
+
+const cwdText      = $("#cwdText"),
+      previewCount = $("#previewCount"),
+      toast        = $("#toast");
+
+const ROOT = "/mnt/photos";
+let cwd = ROOT;
+const selected = new Set();
+let savedFolders = new Set(); // 保存済みフォルダを追跡
+let currentDlnaMount = null;
+let currentUsbPhotoPath = null;
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(()=>toast.classList.remove("show"), 1600);
+}
+
+function updateSelectionStatus(){
+  const statusEl = document.getElementById("selectionStatus");
+  if (!statusEl) return;
+  
+  // 選択されたフォルダと保存済みフォルダを比較
+  const hasUnsavedChanges = 
+    selected.size !== savedFolders.size ||
+    ![...selected].every(f => savedFolders.has(f));
+  
+  if (selected.size === 0) {
+    statusEl.style.display = "none";
+  } else if (hasUnsavedChanges) {
+    statusEl.style.display = "block";
+    statusEl.style.background = "#fff3cd";
+    statusEl.style.color = "#856404";
+    statusEl.textContent = "There're unsaved changes — SAVE to apply";
+  } else {
+    statusEl.style.display = "block";
+    statusEl.style.background = "#d4edda";
+    statusEl.style.color = "#155724";
+    statusEl.textContent = "All folders active";
+  }
+}
+
+
+
+
+/* ---- API helpers ---- */
+async function apiFs(path){
+  const url = new URL('/api/fs/list', location.origin);
+  if (path) url.searchParams.set('path', path);
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('fs');
+  return r.json();
+}
+
+async function apiGetCfg(){
+  const r = await fetch('/api/config');
+  if (!r.ok) throw new Error('get_cfg');
+  return r.json(); // ここで tz も返ってくる想定
+}
+
+/**
+ * 設定を保存する。呼び出し側で tz を含めて渡す:
+ *   apiSetCfg({ tz: 'Asia/Tokyo', display_ms: 8000, ... })
+ */
+async function apiSetCfg(body){
+  const r = await fetch('/api/config', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(body) // ← tz を呼び出し側で入れる
+  });
+  if (!r.ok) throw new Error('set_cfg');
+}
+
+async function apiSaveSel(arr){
+  const r = await fetch('/api/selection', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({folders: arr})
+  });
+  if (!r.ok) throw new Error('sel');
+}
+
+
+
+
+
+async function tryLoadSel(){
+  selected.clear();
+  savedFolders.clear();
+  try{
+    const r = await fetch('/api/selection');
+    if (!r.ok) return;
+    const j = await r.json();
+    (j.folders || []).forEach(p => {
+      selected.add(p);
+      savedFolders.add(p); // 保存済みとしてマーク
+    });
+  }catch{}
+  renderChosen();   // ← 読み込んだら描画
+}
+
+
+
+
+/* ---- UI builders ---- */
+function renderChosen(){
+  chosen.innerHTML = "";
+  [...selected].forEach(p=>{
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <span style="font-family:ui-monospace,Menlo,monospace;word-break:break-all">${p}</span>
+      <span style="margin-left:auto"></span>
+      <button data-path="${p}">REMOVE</button>`;
+    li.querySelector("button").onclick = ev=>{
+      selected.delete(ev.currentTarget.dataset.path);
+      renderChosen();
+      updateSelectionStatus();
+    };
+    chosen.appendChild(li);
+  });
+  updateSelectionStatus();
+}
+
+async function browse(path){
+  cwd = path || ROOT;
+  cwdText.textContent = cwd;
+  dirList.innerHTML = "";
+  preview.innerHTML = "";
+  previewCount.textContent = "";
+  try{
+    const j = await apiFs(cwd);
+    const frag = document.createDocumentFragment();
+
+    if (j.up){
+      const li = document.createElement('li');
+      li.className = "back-btn";
+      li.textContent = "↩︎";
+      li.onclick = ()=>browse(j.up);
+      frag.appendChild(li);
+    }
+    (j.dirs||[]).forEach(d=>{
+      const li = document.createElement('li');
+      li.innerHTML = `📁 <span class="muted" style="word-break:break-all">${d}</span>`;
+      li.onclick = ()=>browse(d);
+      frag.appendChild(li);
+    });
+    dirList.appendChild(frag);
+
+    const imgs = (j.images||[]).slice(0,8);
+    if (imgs.length){
+      imgs.forEach(p=>{
+        const img = document.createElement('img');
+        img.className = "thumb";
+        img.loading = "lazy";
+        img.src = `/files?path=${encodeURIComponent(p)}`;
+        preview.appendChild(img);
+      });
+      previewCount.textContent = `${j.images.length} IMAGES IN THIS LEVEL`;
+    }else{
+      preview.innerHTML = `<div class="muted" style="padding:8px;text-align:center">NO IMAGES FOUND</div>`;
+      previewCount.textContent = "";
+    }
+  }catch{
+    showToast("FAILED TO LOAD");
+  }
+}
+
+/* ---- buttons ---- */
+$("#addThis").onclick = ()=>{
+  selected.add(cwd);
+  renderChosen();
+  updateSelectionStatus();
+  showToast("ADDED");
+};
+$("#saveSel").onclick = async()=>{
+  document.getElementById("saving").style.display = "";
+  try{
+    await apiSaveSel([...selected]);
+    // 保存成功したら savedFolders を更新
+    savedFolders.clear();
+    selected.forEach(f => savedFolders.add(f));
+    updateSelectionStatus();
+    showToast("SAVED ADDED FOLDERS");
+  }catch{
+    showToast("SAVE FAILED");
+  }finally{
+    document.getElementById("saving").style.display = "none";
+  }
+};
+
+
+
+
+
+(function(){
+  async function apiSetCfg(body){
+    const r = await fetch('/api/config', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    if(!r.ok) throw new Error('cfg ' + r.status);
+  }
+  $('#saveCfg')?.addEventListener('click', async () => {
+    const spin = $('#savingCfg');
+    if (spin) spin.style.display = '';
+    try{
+      await apiSetCfg({
+        display_ms:   +(document.getElementById("display_ms")?.value ?? 15000),
+        fade_ms:      +(document.getElementById("fade_ms")?.value  ?? 8000),
+        margin_rate:   (document.getElementById("margin_rate")?.value || '5%').trim(),
+        ken_burns:    !!document.getElementById("ken_burns")?.checked,
+        show_caption: !!document.getElementById("show_caption")?.checked,
+      });
+      window.showToast ? showToast('SAVED DISPLAY SETTINGS') : alert('Saved!');
+    }catch(e){
+      console.error(e);
+      window.showToast ? showToast('SAVE FAILED') : alert('Save failed');
+    }finally{
+      if (spin) spin.style.display = 'none';
+    }
+  });
+})();
+
+
+
+
+
+
+/* ---- USB Photo functions ---- */
+async function checkUsbPhoto(){
+  try{
+    const r = await fetch('/api/usb/photo');
+    const j = await r.json();
+    
+    console.log("USB Photo response:", j);
+    
+    if(j.available && j.path){
+      currentUsbPhotoPath = j.path;
+      usbPhotoStatus.textContent = `FOUND ${j.image_count}`;
+      usbPhotoStatus.style.color = "#0a0";
+      showToast(`Found ${j.image_count} images`);
+      // ファイルブラウザをUSBフォルダに切り替え
+      browse(j.path);
+    }else{
+      currentUsbPhotoPath = null;
+      usbPhotoStatus.textContent = "❌ NO USB PHOTO FOLDER FOUND (insert USB with Photo/ folder)";
+      usbPhotoStatus.style.color = "#666";
+      showToast("No USB Photo folder");
+    }
+  }catch(e){
+    console.error("USB photo check failed:", e);
+    usbPhotoStatus.textContent = "⚠️ CHECK FAILED - " + e.message;
+    usbPhotoStatus.style.color = "#f00";
+    showToast("USB check failed");
+  }
+}
+
+const usbPhotoCheckBtn = $("#usbPhotoCheck");
+if(usbPhotoCheckBtn){
+  usbPhotoCheckBtn.onclick = async()=>{
+    console.log("USB Photo Check clicked");
+    usbPhotoStatus.textContent = "CHECKING...";
+    await checkUsbPhoto();
+  };
+}else{
+  console.error("usbPhotoCheck button not found");
+}
+
+// USB Photo Add button removed - no longer needed
+
+/* ---- Share Folder Dialog ---- */
+let pendingMountAddress = null;
+let pendingMountName = null;
+
+function showShareFolderDialog(address, name){
+  console.log("showShareFolderDialog called:", {address, name});
+  
+  pendingMountAddress = address;
+  pendingMountName = name;
+  
+  const dialog = $("#shareFolderDialog");
+  const nameEl = $("#dialogNasName");
+  const addressEl = $("#dialogNasAddress");
+  const select = $("#shareFolderSelect");
+  const input = $("#shareFolderInput");
+  
+  if(!dialog || !nameEl || !addressEl || !select || !input){
+    console.error("Dialog elements not found");
+    return;
+  }
+  
+  nameEl.textContent = name;
+  addressEl.textContent = address;
+  select.value = "Multimedia";  // デフォルトをMultimediaに
+  input.value = "";
+  input.style.display = "none";
+  
+  // セレクトボックスの変更イベント
+  select.onchange = ()=>{
+    if(select.value === "_custom"){
+      input.style.display = "block";
+      input.focus();
+    }else{
+      input.style.display = "none";
+    }
+  };
+  
+  dialog.style.display = "grid";
+  select.focus();
+  
+  console.log("Dialog opened, pending values:", {
+    pendingMountAddress,
+    pendingMountName
+  });
+}
+
+function hideShareFolderDialog(){
+  const dialog = $("#shareFolderDialog");
+  dialog.style.display = "none";
+  pendingMountAddress = null;
+  pendingMountName = null;
+}
+
+async function mountDlnaShare(){
+  const select = $("#shareFolderSelect");
+  const input = $("#shareFolderInput");
+  
+  // セレクトボックスまたはカスタム入力から値を取得
+  let share;
+  if(select.value === "_custom"){
+    share = input.value.trim();
+  }else{
+    share = select.value;
+  }
+  
+  if(!share){
+    showToast("Please enter a share folder name");
+    return;
+  }
+  
+  // 値を保存してからダイアログを閉じる
+  const address = pendingMountAddress;
+  const name = pendingMountName;
+  
+  // デバッグログ
+  console.log("Mounting DLNA:", {
+    address: address,
+    name: name,
+    share: share
+  });
+  
+  if(!address){
+    showToast("❌ ERROR: No address selected");
+    return;
+  }
+  
+  hideShareFolderDialog();
+  dlnaStatus.textContent = "🔄 MOUNTING...";
+  dlnaStatus.style.color = "#2563eb";
+  
+  try{
+    const payload = {
+      address: address, 
+      name: name, 
+      share: share
+    };
+    
+    console.log("Sending mount request:", payload);
+    
+    const mr = await fetch('/api/dlna/mount', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    
+    if(mr.ok){
+      const mj = await mr.json();
+      showToast(`✅ MOUNTED: ${name}`);
+      currentDlnaMount = mj.mount_point;
+      await checkDlnaStatus();
+      // マウントポイントに移動
+      browse(mj.mount_point);
+    }else{
+      const err = await mr.json();
+      showToast(`❌ MOUNT FAILED: ${err.error || 'Unknown error'}`);
+      dlnaStatus.textContent = "❌ MOUNT FAILED";
+      dlnaStatus.style.color = "#f00";
+    }
+  }catch(e){
+    console.error("Mount error:", e);
+    showToast("❌ MOUNT FAILED");
+    dlnaStatus.textContent = "❌ MOUNT FAILED";
+    dlnaStatus.style.color = "#f00";
+  }
+}
+
+// Dialog event handlers
+$("#dialogCancel")?.addEventListener("click", hideShareFolderDialog);
+$("#dialogMount")?.addEventListener("click", mountDlnaShare);
+$("#shareFolderInput")?.addEventListener("keypress", (e)=>{
+  if(e.key === "Enter") mountDlnaShare();
+});
+
+/* ---- DLNA functions ---- */
+async function checkDlnaStatus(){
+  try{
+    const r = await fetch('/api/dlna/status');
+    const j = await r.json();
+    
+    console.log("DLNA status:", j);
+    
+    const enabledCheckbox = $("#dlnaEnabled");
+    const discoverBtn = $("#dlnaDiscover");
+    const helpText = $("#dlnaHelp");
+    
+    if(enabledCheckbox){
+      enabledCheckbox.checked = !!j.enabled;
+    }
+    
+    // ヘルプテキストの表示/非表示
+    if(helpText){
+      helpText.style.display = j.enabled ? "block" : "none";
+    }
+    
+    // DISCOVERボタンの有効/無効
+    if(discoverBtn){
+      if(j.enabled){
+        discoverBtn.disabled = false;
+        discoverBtn.style.opacity = "1";
+      }else{
+        discoverBtn.disabled = true;
+        discoverBtn.style.opacity = "0.5";
+      }
+    }
+    
+    if(j.mounted && j.mount_point){
+      currentDlnaMount = j.mount_point;
+      dlnaStatus.textContent = `MOUNTED: ${j.name || j.address}`;
+    }else{
+      currentDlnaMount = null;
+      dlnaStatus.textContent = j.enabled ? "NOT MOUNTED" : "DISABLED";
+    }
+  }catch(e){
+    console.error("DLNA status check failed:", e);
+    dlnaStatus.textContent = "STATUS CHECK FAILED";
+  }
+}
+
+const dlnaEnabledCheckbox = $("#dlnaEnabled");
+const dlnaHelp = $("#dlnaHelp");
+if(dlnaEnabledCheckbox){
+  dlnaEnabledCheckbox.onchange = async(e)=>{
+    const enabled = e.target.checked;
+    console.log("DLNA enabled changed:", enabled);
+    
+    // ヘルプテキストの表示/非表示
+    if(dlnaHelp){
+      dlnaHelp.style.display = enabled ? "block" : "none";
+    }
+    
+    try{
+      // 設定を更新
+      const cfg = await apiGetCfg();
+      cfg.dlna = cfg.dlna || {};
+      cfg.dlna.enabled = enabled;
+      
+      await apiSetCfg(cfg);
+      
+      const discoverBtn = $("#dlnaDiscover");
+      if(discoverBtn){
+        if(enabled){
+          discoverBtn.disabled = false;
+          discoverBtn.style.opacity = "1";
+          dlnaStatus.textContent = "ENABLED";
+          showToast("NAS/DLNA ENABLED");
+        }else{
+          discoverBtn.disabled = true;
+          discoverBtn.style.opacity = "0.5";
+          dlnaStatus.textContent = "DISABLED";
+          showToast("NAS/DLNA DISABLED");
+          
+          // マウント中の場合はアンマウント
+          if(currentDlnaMount){
+            await fetch('/api/dlna/unmount', {method:'POST'});
+            currentDlnaMount = null;
+          }
+        }
+      }
+    }catch(e){
+      console.error("Failed to toggle DLNA:", e);
+      showToast("FAILED TO UPDATE");
+      e.target.checked = !enabled; // 元に戻す
+    }
+  };
+}else{
+  console.error("dlnaEnabled checkbox not found");
+}
+
+const dlnaDiscoverBtn = $("#dlnaDiscover");
+if(dlnaDiscoverBtn){
+  dlnaDiscoverBtn.onclick = async()=>{
+    console.log("DLNA Discover clicked");
+    dlnaStatus.textContent = "🔍 DISCOVERING... (this may take 5 seconds)";
+    dlnaStatus.style.color = "#2563eb";
+    dlnaList.innerHTML = "";
+    dlnaList.style.display = "none";
+    showToast("Searching for DLNA servers...");
+  
+  try{
+    const r = await fetch('/api/dlna/discover');
+    const j = await r.json();
+    
+    console.log("DLNA discovery response:", j);
+    
+    if(j.services && j.services.length > 0){
+      dlnaList.innerHTML = "";
+      j.services.forEach(s=>{
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span>📡 ${s.name}</span>
+          <span class="muted" style="margin-left:auto">${s.address}</span>
+          <button data-addr="${s.address}" data-name="${s.name}">MOUNT</button>`;
+        
+        li.querySelector("button").onclick = async(ev)=>{
+          const addr = ev.target.dataset.addr;
+          const name = ev.target.dataset.name;
+          
+          // 共有フォルダ名を入力モーダルを表示
+          showShareFolderDialog(addr, name);
+        };
+        
+        dlnaList.appendChild(li);
+      });
+      dlnaList.style.display = "";
+      dlnaStatus.textContent = `FOUND ${j.services.length}`;
+      dlnaStatus.style.color = "#0a0";
+      showToast(`Found ${j.services.length} DLNA server(s)`);
+    }else{
+      dlnaStatus.textContent = "❌ NO DLNA SERVICES FOUND (check network)";
+      dlnaStatus.style.color = "#666";
+      showToast("No DLNA servers found");
+    }
+  }catch(e){
+    dlnaStatus.textContent = "⚠️ DISCOVERY FAILED - " + (e.message || "Unknown error");
+    dlnaStatus.style.color = "#f00";
+    showToast("DLNA discovery failed");
+    console.error("DLNA discovery error:", e);
+  }
+  };
+}else{
+  console.error("dlnaDiscover button not found");
+}
+
+
+/* ---- init ---- */
+(async function init(){
+  console.log("Initializing settings page...");
+  
+  const c = await apiGetCfg();
+  document.getElementById("tz").value = (c.tz || "Asia/Tokyo");
+  document.getElementById("display_ms").value = c.display_ms ?? 8000;
+  document.getElementById("fade_ms").value    = c.fade_ms    ?? 3000;
+  document.getElementById("margin_rate").value= c.margin_rate ?? '5%';
+  document.getElementById("ken_burns").checked= !!c.ken_burns;
+  // ★ 追加：読み込み
+  document.getElementById("show_caption").checked = !!c.show_caption;
+
+  console.log("Checking USB photo...");
+  await checkUsbPhoto();
+  
+  console.log("Checking DLNA status...");
+  await checkDlnaStatus();
+  
+  console.log("Loading selection...");
+  await tryLoadSel();
+  
+  console.log("Browsing initial folder...");
+  browse(currentDlnaMount || currentUsbPhotoPath || ROOT);
+  
+  console.log("Initialization complete");
+})();
+
+
+  // --- Save System Settings ---
+  $("#saveSys").onclick = async ()=>{
+    $("#savingSys").style.display = "";
+    try {
+      await apiSetCfg({ tz: $("#tz").value });
+      showToast("SAVED SYSTEM SETTINGS");
+    } catch {
+      showToast("SAVE FAILED");
+    } finally {
+      $("#savingSys").style.display = "none";
+    }
+  };
+
+
+</script>
+
+<footer style="margin-top:40px;padding:20px 0;text-align:center;font-size:12px;color:#999">
+  <img src="settinglogo.png" alt="SuperPhotoframe" style="max-width:200px;height:auto;margin-bottom:12px">
+  <div>©2025 TO-Lab<br>
+  Open Source (CC BY-NC 4.0)<br>
+  <a href="https://github.com/tolab125/SuperPhotoframe" target="_blank" style="color:#999;text-decoration:none">github.com/tolab125/SuperPhotoframe</a></div>
+</footer>

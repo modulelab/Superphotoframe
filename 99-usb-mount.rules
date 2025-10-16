@@ -1,0 +1,7 @@
+# USBメモリを自動的に /mnt/usb にマウントするudevルール
+# /etc/udev/rules.d/99-usb-mount.rules に配置
+
+# USBストレージデバイスを検出
+ACTION=="add", KERNEL=="sd[a-z][0-9]", SUBSYSTEMS=="usb", RUN+="/usr/local/bin/usb-mount.sh %k"
+ACTION=="remove", KERNEL=="sd[a-z][0-9]", SUBSYSTEMS=="usb", RUN+="/usr/local/bin/usb-unmount.sh %k"
+

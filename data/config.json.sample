@@ -1,0 +1,19 @@
+{
+  "display_ms": 8000,
+  "fade_ms": 3000,
+  "margin_rate": "5%",
+  "ken_burns": false,
+  "order": "date",
+  "show_caption": false,
+  "tz": "Asia/Tokyo",
+  "dlna": {
+    "enabled": false,
+    "address": null,
+    "name": null,
+    "share": null,
+    "mount_point": null,
+    "auto_mount": false
+  }
+}
+
+
