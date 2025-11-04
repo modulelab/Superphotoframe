@@ -45,7 +45,7 @@ A Raspberry Pi-based digital photo frame system with advanced features.
 ### 0. Clone Repository
 
 ```bash
-git clone https://github.com/tolab125/Superphotoframe.git
+git clone https://github.com/modulelab/Superphotoframe.git
 cd Superphotoframe
 ```
 
@@ -272,9 +272,9 @@ For commercial use inquiries, please contact the author.
 
 ## Author
 
-**TO-Lab** (github.com/tolab125/Superphotoframe)
+**MODULE LAB** (github.com/modulelab/Superphotoframe)
 
-©2025 TO-Lab Open Source
+©2025 MODULE LAB Open Source
 
 ## Changelog
 

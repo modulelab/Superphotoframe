@@ -42,8 +42,8 @@ Raspberry Piベースのデジタルフォトフレームシステム
 
 ```bash
 # SSHまたはHTTPSでクローン
-git clone https://github.com/your-username/raspiframe.git
-cd raspiframe
+git clone https://github.com/modulelab/Superphotoframe.git
+cd Superphotoframe
 ```
 
 ### 1. セットアップスクリプトの実行
@@ -263,9 +263,9 @@ sudo systemctl restart raspiframe
 
 ## 作者
 
-**TO-Lab** (github.com/tolab125/SuperPhotoframe)
+**MODULE LAB** (github.com/modulelab/Superphotoframe)
 
-©2025 TO-Lab Open Source
+©2025 MODULE LAB Open Source
 
 ## 更新履歴
 
