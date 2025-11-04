@@ -1,5 +1,7 @@
 # SuperPhotoframe - Digital Photo Frame
 
+![代替テキスト](https://raw.githubusercontent.com/modulelab/Superphotoframe/refs/heads/main/readme.jpg?token=GHSAT0AAAAAADMPKRYRNXXB37GWPSZ7KN4U2IKEUXQ)
+
 [日本語版はこちら / Japanese version](README_ja.md)
 
 A Raspberry Pi-based digital photo frame system with advanced features.
