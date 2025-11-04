@@ -5,6 +5,20 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>フォトフレーム Player</title>
 <style>
+  /* Barlow フォント読み込み */
+  @font-face {
+    font-family: 'Barlow';
+    src: url('/static/fonts/Barlow-Italic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+  }
+  @font-face {
+    font-family: 'Barlow';
+    src: url('/static/fonts/Barlow-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+  }
+
   *{box-sizing:border-box}
   html,body{
     margin:0;height:100%;overflow:hidden;
@@ -86,8 +100,8 @@
   color:#000; z-index:9999;
   text-align:center; padding:24px;
 
-/* デフォルトフォントを DIN Next に */
-  font-family: "DIN Next LT Pro", sans-serif;
+/* Barlow フォント */
+  font-family: 'Barlow', sans-serif;
 
   opacity:0; transition:opacity .35s ease;
 }
@@ -166,16 +180,16 @@
 
 .busy-overlay{
   position:fixed; inset:0; display:none; place-items:center;
-  background:#000; z-index:10000;
+  background:rgba(255,255,255,.47); z-index:10000;
   letter-spacing: 0.2em;  /* ← 文字間を広げる */
 }
 .busy-overlay.show{ display:grid; }
-.busy-box{ color:#fff; text-align:center; font:600 18px/1.4 system-ui, sans-serif; }
+.busy-box{ color:#000; text-align:center; font:600 18px/1.4 system-ui, sans-serif; }
 .busy-msg{ margin-top:10px; letter-spacing:.02em; }
 .busy-spinner{
   width:36px; height:36px; border-radius:50%;
-  border:3px solid rgba(255,255,255,.35);
-  border-top-color:#fff; margin:0 auto;
+  border:3px solid rgba(0,0,0,.35);
+  border-top-color:#000; margin:0 auto;
   animation: busyspin 1s linear infinite;
 }
 @keyframes busyspin { to { transform: rotate(360deg); } }
