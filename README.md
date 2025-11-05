@@ -1,6 +1,6 @@
 # SuperPhotoframe - Digital Photo Frame
 
-![代替テキスト](https://raw.githubusercontent.com/modulelab/Superphotoframe/refs/heads/main/readme.jpg?token=GHSAT0AAAAAADMPKRYRNXXB37GWPSZ7KN4U2IKEUXQ)
+![代替テキスト](readme.jpg)
 
 [日本語版はこちら / Japanese version](README_ja.md)
 
