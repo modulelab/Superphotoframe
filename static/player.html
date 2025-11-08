@@ -523,11 +523,37 @@ function showScrubOverlay(){
   scrubTimeout=setTimeout(()=>{ el.classList.remove('show'); },3000);
 }
 
-/* ===== 在庫日スクラブ ===== */
+/* ===== 在庫日スクラブ（加速度対応） ===== */
+let lastNudgeTime = 0;
+let nudgeAccelLevel = 0;
+let accelResetTimer = null;
+
 function nudgeDays(step){
   if(!dateList.length) return;
+  
+  // 加速度計算
+  const now = Date.now();
+  const timeSinceLastNudge = now - lastNudgeTime;
+  lastNudgeTime = now;
+  
+  // 300ms以内の連続回転で加速
+  if(timeSinceLastNudge < 300){
+    nudgeAccelLevel = Math.min(nudgeAccelLevel + 1, 3); // 最大レベル3
+  } else if(timeSinceLastNudge > 1000){
+    nudgeAccelLevel = 0; // 1秒以上空いたらリセット
+  }
+  
+  // 加速レベルに応じた移動量（日数）
+  // レベル0: 1日, レベル1: 7日, レベル2: 30日, レベル3: 365日
+  const jumpSizes = [1, 7, 30, 365];
+  const jumpDays = jumpSizes[nudgeAccelLevel];
+  
+  // 自動リセットタイマー（1秒間操作がなければリセット）
+  if(accelResetTimer) clearTimeout(accelResetTimer);
+  accelResetTimer = setTimeout(()=>{ nudgeAccelLevel = 0; }, 1000);
+  
   const wrap=true;
-  let nextIdx = scrubIdx + (step>0?+1:-1);
+  let nextIdx = scrubIdx + (step>0?jumpDays:-jumpDays);
   if(wrap){ nextIdx=(nextIdx+dateList.length)%dateList.length; }
   else { nextIdx=Math.max(0,Math.min(dateList.length-1,nextIdx)); }
   const nextDayKey = dateList[nextIdx];
