@@ -88,8 +88,9 @@ class HapticFeedback:
         if not self.drv:
             return
         try:
+            import adafruit_drv2605
             eid = effect_id if effect_id is not None else self.effect_id
-            self.drv.sequence[0] = eid
+            self.drv.sequence[0] = adafruit_drv2605.Effect(eid)
             self.drv.play()
         except Exception as e:
             print(f"[haptic] Trigger error: {e}")
