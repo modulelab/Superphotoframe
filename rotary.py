@@ -39,7 +39,7 @@ def _env_int(name: str, default: Optional[int]) -> Optional[int]:
 
 PIN_A: int = _env_int("ROT_A", 17) or 17
 PIN_B: int = _env_int("ROT_B", 27) or 27
-PIN_SW: Optional[int] = _env_int("ROT_SW", None)
+PIN_SW: Optional[int] = _env_int("ROT_SW", 22)
 
 REVERSE: bool = os.environ.get("ROT_REVERSE", "0") not in ("", "0", "false", "False")
 

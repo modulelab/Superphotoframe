@@ -84,18 +84,19 @@ log "Step 5: Starting Kiosk mode..."
 
 # 環境変数設定
 export DISPLAY=:0
-export XAUTHORITY=/home/pi/.Xauthority
+export XAUTHORITY=/home/jd/.Xauthority
 
 # Chromiumでkioskモード起動
-if command -v chromium-browser > /dev/null 2>&1; then
+CHROMIUM_BIN="$(command -v chromium || command -v chromium-browser || true)"
+if [ -n "$CHROMIUM_BIN" ]; then
     log "Starting Chromium in kiosk mode..."
     
     # 既存のChromiumプロセスを終了
-    pkill -f chromium-browser || true
+    pkill -f chromium || pkill -f chromium-browser || true
     sleep 2
     
     # Kioskモードで起動
-    chromium-browser \
+    "$CHROMIUM_BIN" \
         --kiosk \
         --noerrdialogs \
         --disable-infobars \
@@ -105,12 +106,12 @@ if command -v chromium-browser > /dev/null 2>&1; then
         --disable-features=TranslateUI \
         --disk-cache-dir=/dev/null \
         --password-store=basic \
-        http://localhost:8000/static/player.html \
+        http://localhost:8000/static/start.html \
         >> "$LOG_FILE" 2>&1 &
     
     log "Kiosk mode started (PID: $!)"
 else
-    log "WARNING: chromium-browser not found"
+    log "WARNING: Chromium executable not found"
 fi
 
 log "========================================="

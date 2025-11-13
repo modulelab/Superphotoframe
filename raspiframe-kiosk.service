@@ -10,10 +10,10 @@ Wants=raspiframe.service
 
 [Service]
 Type=oneshot
-User=pi
+User=jd
 Environment="DISPLAY=:0"
-Environment="XAUTHORITY=/home/pi/.Xauthority"
-ExecStart=/home/jd/raspiframe/startup_pipeline.sh
+Environment="XAUTHORITY=/home/jd/.Xauthority"
+ExecStart=/home/jd/Superphotoframe/startup_pipeline.sh
 RemainAfterExit=yes
 
 [Install]

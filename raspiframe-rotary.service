@@ -1,0 +1,17 @@
+[Unit]
+Description=Raspiframe Rotary Encoder Bridge
+After=multi-user.target
+
+[Service]
+Type=simple
+User=jd
+Group=jd
+WorkingDirectory=/home/jd/Superphotoframe
+Environment="PATH=/home/jd/Superphotoframe/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/jd/Superphotoframe/.venv/bin/python /home/jd/Superphotoframe/rotary.py
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+
