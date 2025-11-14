@@ -252,17 +252,20 @@ gsettings set org.gnome.nm-applet disable-disconnected-notifications true 2>/dev
 gsettings set org.gnome.nm-applet disable-connected-notifications true 2>/dev/null || true
 
 
-# 10. 起動後のディスプレイ回転・解像度制御設定
+
 echo ""
 echo "Step 10: Configure display auto-rotation for labwc..."
 
-AUTOSTART_DIR="$HOME/.config/labwc/autostart"
+LABWC_DIR="$HOME/.config/labwc"
 
-mkdir -p "$AUTOSTART_DIR"
+# labwc 用ディレクトリを作成
+mkdir -p "$LABWC_DIR"
 
-cat > "$AUTOSTART_DIR/rotate-portrait.sh" << 'EOF'
+########################################
+# 1) 回転・解像度本体スクリプト
+########################################
+cat > "$LABWC_DIR/rotate-portrait.sh" << 'EOF'
 #!/usr/bin/env bash
-
 set -e
 
 LOG="$HOME/.local/share/raspiframe-rotate.log"
@@ -313,8 +316,20 @@ fi
 exit 0
 EOF
 
-chmod +x "$AUTOSTART_DIR/rotate-portrait.sh"
-echo "  - Created $AUTOSTART_DIR/rotate-portrait.sh (left 90°, 1024x600→1280x720 fallback)"
+chmod +x "$LABWC_DIR/rotate-portrait.sh"
+echo "  - Created $LABWC_DIR/rotate-portrait.sh (left 90°, 1024x600→1280x720 fallback)"
+
+########################################
+# 2) labwc の autostart からキック
+########################################
+cat > "$LABWC_DIR/autostart" << 'EOF'
+#!/bin/sh
+$HOME/.config/labwc/rotate-portrait.sh &
+EOF
+
+chmod +x "$LABWC_DIR/autostart"
+echo "  - Created $LABWC_DIR/autostart (runs rotate-portrait.sh on session start)"
+
 
 
 echo ""
