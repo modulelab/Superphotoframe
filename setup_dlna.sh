@@ -251,6 +251,72 @@ killall dhcpcd-gtk 2>/dev/null || true
 gsettings set org.gnome.nm-applet disable-disconnected-notifications true 2>/dev/null || true
 gsettings set org.gnome.nm-applet disable-connected-notifications true 2>/dev/null || true
 
+
+# 10. 起動後のディスプレイ回転・解像度制御設定
+echo ""
+echo "Step 10: Configure display auto-rotation for labwc..."
+
+AUTOSTART_DIR="$HOME/.config/labwc/autostart"
+
+mkdir -p "$AUTOSTART_DIR"
+
+cat > "$AUTOSTART_DIR/rotate-portrait.sh" << 'EOF'
+#!/usr/bin/env bash
+
+set -e
+
+LOG="$HOME/.local/share/raspiframe-rotate.log"
+mkdir -p "$(dirname "$LOG")"
+echo "==== $(date) rotate start ====" >>"$LOG"
+
+# GUI（labwc）が立ち上がり切るのを少し待つ
+sleep 2
+
+# Wayland ソケットを自動検出
+export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+WAY_SOCK="$(ls "$XDG_RUNTIME_DIR"/wayland-* 2>/dev/null | head -n1 || true)"
+if [ -n "$WAY_SOCK" ]; then
+    export WAYLAND_DISPLAY="$(basename "$WAY_SOCK")"
+fi
+echo "ENV WAYLAND_DISPLAY=$WAYLAND_DISPLAY XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR" >>"$LOG"
+
+# 解像度優先順位
+MODE1="1024x600"
+MODE2="1280x720"
+
+if command -v wlr-randr >/dev/null 2>&1; then
+    # 接続されてる出力名を1つ取得（例: HDMI-A-1）
+    OUT="$(wlr-randr | awk '/ connected/{print $1; exit}')"
+    [ -z "$OUT" ] && OUT="HDMI-A-1"
+
+    echo "[wayland] out=$OUT" >>"$LOG"
+
+    # ① 1024x600 + 左90°
+    if wlr-randr --output "$OUT" --mode "$MODE1" --transform 90; then
+        echo "[wayland] set $MODE1 & rotated 90°" >>"$LOG"
+
+    # ② ダメなら 1280x720 + 左90°
+    elif wlr-randr --output "$OUT" --mode "$MODE2" --transform 90; then
+        echo "[wayland] fallback: $MODE2 & rotated 90°" >>"$LOG"
+
+    # ③ それもダメなら回転だけ
+    elif wlr-randr --output "$OUT" --transform 90; then
+        echo "[wayland] fallback: rotated 90° only" >>"$LOG"
+
+    else
+        echo "[wayland] all wlr-randr attempts failed" >>"$LOG"
+    fi
+else
+    echo "[wayland] wlr-randr not found" >>"$LOG"
+fi
+
+exit 0
+EOF
+
+chmod +x "$AUTOSTART_DIR/rotate-portrait.sh"
+echo "  - Created $AUTOSTART_DIR/rotate-portrait.sh (left 90°, 1024x600→1280x720 fallback)"
+
+
 echo ""
 echo "========================================="
 echo "Setup complete!"
