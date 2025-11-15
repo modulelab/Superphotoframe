@@ -26,10 +26,25 @@ sudo apt-get install -y \
     x11-xserver-utils \
     unclutter
 
-# 2. Pythonパッケージのインストール
+# 2. Pythonパッケージのインストール（仮想環境を使用）
 echo ""
-echo "Step 2: Installing Python packages..."
-pip3 install -r "${SCRIPT_DIR}/requirements.txt"
+echo "Step 2: Setting up Python virtual environment and installing packages..."
+
+# 仮想環境のパス
+VENV_DIR="${CURRENT_HOME}/raspiframe-venv"
+VENV_PYTHON="${VENV_DIR}/bin/python3"
+
+# 仮想環境が存在しない場合は作成
+if [ ! -d "$VENV_DIR" ]; then
+    echo "Creating virtual environment at $VENV_DIR..."
+    python3 -m venv "$VENV_DIR"
+fi
+
+# 仮想環境にパッケージをインストール
+echo "Installing Python packages in virtual environment..."
+"$VENV_PYTHON" -m pip install --upgrade pip
+"$VENV_PYTHON" -m pip install -r "${SCRIPT_DIR}/requirements.txt"
+echo "✓ Python packages installed in virtual environment"
 
 # 3. ディレクトリ作成
 echo ""
@@ -58,6 +73,19 @@ rm /tmp/raspiframe-sudoers
 echo ""
 echo "Step 5: Installing systemd services..."
 
+# 仮想環境のパスを確認
+VENV_DIR="${CURRENT_HOME}/raspiframe-venv"
+VENV_PYTHON="${VENV_DIR}/bin/python3"
+
+if [ ! -f "$VENV_PYTHON" ]; then
+    echo "WARNING: Virtual environment not found at $VENV_PYTHON"
+    echo "Falling back to system Python3"
+    PYTHON_CMD="/usr/bin/python3"
+else
+    PYTHON_CMD="$VENV_PYTHON"
+    echo "Using virtual environment Python: $PYTHON_CMD"
+fi
+
 # raspiframe.service
 cat > /tmp/raspiframe.service << EOF
 [Unit]
@@ -70,7 +98,7 @@ Type=simple
 User=${CURRENT_USER}
 WorkingDirectory=${SCRIPT_DIR}
 Environment="PATH=/usr/local/bin:/usr/bin:/bin"
-ExecStart=/usr/bin/python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+ExecStart=${PYTHON_CMD} -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 Restart=always
 RestartSec=5
 
@@ -100,6 +128,36 @@ WantedBy=graphical.target
 EOF
 sudo cp /tmp/raspiframe-kiosk.service /etc/systemd/system/
 rm /tmp/raspiframe-kiosk.service
+
+# raspiframe-rotary.service（オプション：ロータリーエンコーダー用）
+echo ""
+echo "Install rotary encoder service? (y/n)"
+read -r install_rotary
+if [[ "$install_rotary" =~ ^[Yy]$ ]]; then
+    cat > /tmp/raspiframe-rotary.service << EOF
+[Unit]
+Description=Raspiframe Rotary Encoder Service
+After=raspiframe.service network-online.target
+Wants=raspiframe.service
+
+[Service]
+Type=simple
+User=${CURRENT_USER}
+WorkingDirectory=${SCRIPT_DIR}
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+Environment="ROTARY_WS_URL=ws://127.0.0.1:8000/ws/rotary"
+ExecStart=${PYTHON_CMD} ${SCRIPT_DIR}/rotary.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    sudo cp /tmp/raspiframe-rotary.service /etc/systemd/system/
+    rm /tmp/raspiframe-rotary.service
+    sudo systemctl enable raspiframe-rotary.service
+    echo "✓ Rotary encoder service installed"
+fi
 
 sudo systemctl daemon-reload
 sudo systemctl enable raspiframe.service

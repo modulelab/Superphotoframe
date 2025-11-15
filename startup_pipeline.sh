@@ -84,7 +84,7 @@ log "Step 5: Starting Kiosk mode..."
 
 # 環境変数設定
 export DISPLAY=:0
-export XAUTHORITY=/home/pi/.Xauthority
+export XAUTHORITY="$HOME/.Xauthority"
 
 # Chromiumでkioskモード起動
 if command -v chromium-browser > /dev/null 2>&1; then
@@ -105,7 +105,7 @@ if command -v chromium-browser > /dev/null 2>&1; then
         --disable-features=TranslateUI \
         --disk-cache-dir=/dev/null \
         --password-store=basic \
-        http://localhost:8000/static/player.html \
+        http://localhost:8000/static/start.html \
         >> "$LOG_FILE" 2>&1 &
     
     log "Kiosk mode started (PID: $!)"
