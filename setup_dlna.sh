@@ -352,12 +352,17 @@ if command -v wlr-randr >/dev/null 2>&1; then
 
     echo "[wayland] out=$OUT" >>"$LOG"
 
-    # ① 1024x600 + 左90°
-    if wlr-randr --output "$OUT" --mode "$MODE1" --transform 90; then
+    # ① 1024x600のカスタムモードを追加してから設定
+    if wlr-randr --output "$OUT" --custom-mode 1024x600@60Hz 2>>"$LOG"; then
+        echo "[wayland] custom mode 1024x600@60Hz added" >>"$LOG"
+    fi
+    
+    # ② 1024x600 + 左90°を試行
+    if wlr-randr --output "$OUT" --mode "$MODE1" --transform 90 2>>"$LOG"; then
         echo "[wayland] set $MODE1 & rotated 90°" >>"$LOG"
 
-    # ② ダメなら 1280x720 + 左90°
-    elif wlr-randr --output "$OUT" --mode "$MODE2" --transform 90; then
+    # ③ ダメなら 1280x720 + 左90°
+    elif wlr-randr --output "$OUT" --mode "$MODE2" --transform 90 2>>"$LOG"; then
         echo "[wayland] fallback: $MODE2 & rotated 90°" >>"$LOG"
 
     # ③ それもダメなら回転だけ
