@@ -53,9 +53,31 @@ Raspberry Pi ベースのシンプルで高速なデジタルフォトフレー�
 
 ## セットアップ
 
+### 1. OS イメージの準備
+#### 1.RaspberryPi OSのダウンロード
+```bash
+https://downloads.raspberrypi.com/raspios_oldstable_arm64/images/raspios_oldstable_arm64-2025-10-02/2025-10-01-raspios-bookworm-arm64.img.xz
+```
 
+#### 2. Raspberry Pi Imager でOSをSDカードに書き込む
+ 　- RaspberryPiデバイス：Pi4
+  - OS:USE custom Image、１でダウンロードしたimgを選択
+  - 書き込み先のSDを選択
 
+#### 3. 「設定を編集する」
+   - ホスト名：raspiframe
+   - user:jd pass:任意
+   - Wi-Fi SSID・パスワード
+   -サービスタブへ移動
+   - SSH 有効化（パスワード認証）
+#### 4. SD カードへ書き込み完了後、安全に取り外す。
 
+### 2. メディア／ネットワーク準備
+- USBメモリをfat32,exFATでフォーマット
+- USB メモリに `wifi.txt`, `credentials.txt`, 「Photo」フォルダ を配置。
+- 「Photo」フォルダに写真をフォルダ分けして格納、20xx、など年度のフォルダ分け推奨
+　　※格納する写真は長辺1500px程度にリサイズください。
+- NAS / DLNA を利用する場合は `credentials.txt` に認証情報を設定。
 
 
 ## 起動シーケンス
