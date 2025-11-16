@@ -1,8 +1,8 @@
 # SuperPhotoframe - デジタルフォトフレーム
-SuperPhotoframeはRaspberry Pi ベースの高速・安定・ミニマルを追求したデジタルフォトフレーム。
-IoTプロダクトでありがちな接続切れや認証エラーのストレスを排除、エディトリアルのような美しいレイアウトの写真を日常に溶け込ませ、静かな写真体験を提供します。
+SuperPhotoframeはRaspberry Pi ベースの高速・安定・ミニマルを追求したデジタルフォトフレーム。  
+IoTプロダクトでありがちな接続切れや認証エラーのストレスを排除、エディトリアルのような美しいレイアウトの写真を日常に溶け込ませ、静かな写真体験を提供します。  
 
-世界中で調達可能な汎用部品だけで低コストでDIYが可能です。（≒ $2~300）
+世界中で調達可能な汎用部品だけで低コストでDIYが可能です(≒ $2~300)    
 ※資材詳細はbuild guideを参照
 
 
@@ -14,10 +14,10 @@ IoTプロダクトでありがちな接続切れや認証エラーのストレ�
 - ❌ 商用利用は禁止
 詳細: https://creativecommons.org/licenses/by-nc/4.0/
 
-**© 2025 MODULE LAB** — Open Source under CC BY-NC 4.0
-github.com/modulelab/Superphotoframe
-商用利用をご希望の場合は、作者までお問い合わせください。
-
+**© 2025 MODULE LAB** — Open Source under CC BY-NC 4.0  
+github.com/modulelab/Superphotoframe  
+商用利用をご希望の場合は、作者までお問い合わせください。  
+  
 ## システム要件
 
 - **ハードウェア**: Raspberry Pi 4（推奨: 4GB以上）
@@ -57,6 +57,7 @@ github.com/modulelab/Superphotoframe
 
 ## セットアップ
 
+
 ### 1. OS イメージの準備
 #### 1-1.RaspberryPi OSのダウンロード
 ```bash
@@ -66,23 +67,26 @@ https://downloads.raspberrypi.com/raspios_oldstable_arm64/images/raspios_oldstab
 #### 1-2. Raspberry Pi Imager でOSをSDカードに書き込む
   - RaspberryPiデバイスはPi4を選択
   - OSでUSE custom Image > １でダウンロードしたimgを選択
-  - 書き込み先のSDを選択
-
+  - 書き込み先のSDを選択  
+  
 #### 1-3. 「設定を編集する」
    - Host名：raspiframe
    - User:jd 
    - Password:任意
    - Wi-Fi SSID・パスワード
    サービスタブへ移動
-   - SSH 有効化にチェック（パスワード認証）
-#### 1-4. SD カードへ書き込み完了後、安全に取り外す。
+   - SSH 有効化にチェック（パスワード認証）  
+     
 
-
+#### 1-4. SD カードへ書き込み完了後、安全に取り外す。  
+  
+  
+  
 ### 2. メディア／ネットワーク準備
 - USBメモリをfat32,exFATでフォーマット
-- USB メモリに `wifi.txt`, `credentials.txt`, 「Photo」フォルダ を配置。
+- USB メモリに `wifi.txt`, `credentials.txt`, 「Photo」フォルダ を配置。  
   ※USB.zipにテンプレートがあるため、これを解凍しそのままUSBの1階層目に配置ください。
-- 「Photo」フォルダに写真をフォルダ分けして格納、20xx、など年度のフォルダ分け推奨
+- 「Photo」フォルダに写真をフォルダ分けして格納、20xx、など年度のフォルダ分け推奨  
 　　※格納する写真は長辺1500px程度にリサイズください。
 - 以降写真を追加したい場合適宜追加可能。
 - NAS / DLNA を利用する場合は `credentials.txt` に認証情報を設定。
@@ -103,7 +107,7 @@ https://downloads.raspberrypi.com/raspios_oldstable_arm64/images/raspios_oldstab
 ssh jd@192.168.xx.xx
 ```
 
-SSH接続できた状態で以下を順に実行していきます。
+SSH接続できた状態で以下を順に実行していきます。  
 ※ターミナルでユーザー名、コマンド入力蘭が出ている状態が次のコマンドを実行できる状態です。
 
 ```bash
@@ -137,7 +141,7 @@ pip install -r requirements.txt
 chmod +x setup_dlna.sh
 ./setup_dlna.sh
 ```
-上記実行中にコマンドラインに質問が表示されます。以下のように回答。
+上記実行中にコマンドラインに質問が表示されます。以下のように回答。  
 - Install rotary encoder service? (y/n) :y enter
 - Configure display rotation? :enter(skip)
 - Force HDMI hotplug detection? (recommended for photo frames) (y/n): y enter
@@ -147,13 +151,13 @@ chmod +x setup_dlna.sh
 ```bash
 sudo raspi-config
 ```
-- PCのBIOSのような設定画面が立ち上がります。system setting > s7 splash screen に進み「no」を選択後 > 「finish」へ進む
+- PCのBIOSのような設定画面が立ち上がります。system setting > s7 splash screen に進み「no」を選択後 > 「finish」へ進む  
 ※カーソルキーでメニューを移動してenterで確定
 
 ```bash
 sudo reboot
 ```
-これで全て完了です🎉
+これで全て完了です🎉  
 
 - 起動後表示されるQRコードをスマホで読み込み、設定画面に入ります。
 - 設定画面から表示したいフォルダを選択、保存。スライドショーが始まります。
