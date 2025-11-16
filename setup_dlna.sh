@@ -393,7 +393,54 @@ EOF
 chmod +x "$LABWC_DIR/autostart"
 echo "  - Created $LABWC_DIR/autostart (runs rotate-portrait.sh on session start)"
 
+# 11. Chromiumの翻訳機能を無効化
+echo ""
+echo "Step 11: Disable Chromium translate feature..."
+CHROMIUM_PREFS_DIR="${CURRENT_HOME}/.config/chromium/Default"
+CHROMIUM_PREFS_FILE="${CHROMIUM_PREFS_DIR}/Preferences"
+mkdir -p "$CHROMIUM_PREFS_DIR"
 
+# PythonでJSONを編集して翻訳機能を無効化
+python3 << EOF
+import json
+import os
+
+prefs_file = "$CHROMIUM_PREFS_FILE"
+try:
+    with open(prefs_file, 'r', encoding='utf-8') as f:
+        prefs = json.load(f)
+except (FileNotFoundError, json.JSONDecodeError):
+    prefs = {}
+
+# 翻訳機能を完全に無効化
+if 'translate' not in prefs:
+    prefs['translate'] = {}
+prefs['translate']['enabled'] = False
+prefs['translate']['denied_count'] = {}
+prefs['translate']['denied_count']['ja'] = 999999
+prefs['translate']['accepted_count'] = {}
+
+# 言語設定
+if 'intl' not in prefs:
+    prefs['intl'] = {}
+prefs['intl']['selected_languages'] = 'ja'
+prefs['intl']['accept_languages'] = 'ja,ja-JP'
+
+# 翻訳UIを無効化
+if 'translate_denied_count' not in prefs:
+    prefs['translate_denied_count'] = {}
+prefs['translate_denied_count']['ja'] = 999999
+
+# 設定を保存
+with open(prefs_file, 'w', encoding='utf-8') as f:
+    json.dump(prefs, f, ensure_ascii=False, indent=2)
+EOF
+
+if [ -f "$CHROMIUM_PREFS_FILE" ]; then
+    echo "✓ Chromium translate feature disabled in preferences"
+else
+    echo "✓ Chromium preferences file created with translate disabled"
+fi
 
 echo ""
 echo "========================================="

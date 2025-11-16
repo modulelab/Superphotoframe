@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Language" content="ja">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>フォトフレーム Player</title>
 <style>
@@ -217,7 +218,29 @@
 /* 既存の .stage はこのままでOK（位置は letterbox 内で絶対配置） */
 .stage{ position:absolute; inset:0; }
 
-
+/* 翻訳パネルを非表示（より強力な方法） */
+#google-translate-element,
+.gtx-trans,
+[class*="translate"],
+[id*="translate"],
+iframe[src*="translate.googleapis.com"],
+iframe[src*="translate.google.com"],
+div[style*="translate"],
+div[style*="position: fixed"][style*="z-index"],
+div[style*="position: absolute"][style*="z-index"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  left: -9999px !important;
+  width: 0 !important;
+  height: 0 !important;
+  z-index: -9999 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+}
 
 </style>
 </head>
@@ -269,6 +292,165 @@
 
 
 <script>
+/* ===== 翻訳パネル非表示処理（強化版） ===== */
+(function hideTranslatePanel() {
+  // 翻訳パネルを検出して削除する関数
+  function removeTranslateElements() {
+    // より広範囲なセレクタ
+    const selectors = [
+      '#google-translate-element',
+      '.gtx-trans',
+      '[class*="translate"]',
+      '[id*="translate"]',
+      'iframe[src*="translate.googleapis.com"]',
+      'iframe[src*="translate.google.com"]',
+      'div[style*="translate"]',
+      'div[style*="position: fixed"][style*="z-index"]',
+      'div[style*="position: absolute"][style*="z-index"]'
+    ];
+    
+    let removed = 0;
+    selectors.forEach(selector => {
+      try {
+        document.querySelectorAll(selector).forEach(el => {
+          // 翻訳関連のテキストを含む要素もチェック
+          const text = el.textContent || el.innerText || '';
+          const isTranslate = text.includes('翻訳') || 
+                             text.includes('Translate') ||
+                             text.includes('このページを翻訳') ||
+                             text.includes('Translate this page') ||
+                             el.id?.includes('translate') ||
+                             el.className?.includes('translate');
+          
+          if (isTranslate || selector.includes('translate')) {
+            // 親要素も含めて削除を試みる
+            let target = el;
+            while (target && target.parentNode) {
+              const parent = target.parentNode;
+              const parentText = parent.textContent || parent.innerText || '';
+              if (parentText.includes('翻訳') || parentText.includes('Translate')) {
+                target = parent;
+              } else {
+                break;
+              }
+            }
+            
+            if (target && target.parentNode) {
+              target.style.cssText = 'display:none!important;visibility:hidden!important;opacity:0!important;width:0!important;height:0!important;z-index:-9999!important;';
+              target.remove();
+              removed++;
+            }
+          }
+        });
+      } catch (e) {
+        console.error('Translate removal error:', e);
+      }
+    });
+    
+    // body直下の固定位置要素もチェック（翻訳パネルは通常ここに追加される）
+    if (document.body) {
+      Array.from(document.body.children).forEach(child => {
+        const style = window.getComputedStyle(child);
+        const text = child.textContent || child.innerText || '';
+        if ((style.position === 'fixed' || style.position === 'absolute') && 
+            (text.includes('翻訳') || text.includes('Translate') || 
+             child.id?.includes('translate') || child.className?.includes('translate'))) {
+          child.style.cssText = 'display:none!important;visibility:hidden!important;opacity:0!important;width:0!important;height:0!important;z-index:-9999!important;';
+          child.remove();
+          removed++;
+        }
+      });
+    }
+    
+    return removed;
+  }
+  
+  // 翻訳機能のイベントを無効化
+  function preventTranslateEvents() {
+    // translateイベントをキャンセル
+    document.addEventListener('translate', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      return false;
+    }, true);
+    
+    // 翻訳関連のメッセージをブロック
+    window.addEventListener('message', (e) => {
+      if (e.data && typeof e.data === 'object') {
+        if (e.data.type === 'translate' || 
+            e.data.source === 'google-translate' ||
+            e.origin?.includes('translate.googleapis.com') ||
+            e.origin?.includes('translate.google.com')) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+      }
+    }, true);
+  }
+  
+  // 初回実行
+  if (document.body) {
+    removeTranslateElements();
+    preventTranslateEvents();
+  } else {
+    document.addEventListener('DOMContentLoaded', () => {
+      removeTranslateElements();
+      preventTranslateEvents();
+    });
+  }
+  
+  // DOM変更を監視して翻訳パネルを削除（より頻繁に）
+  const observer = new MutationObserver((mutations) => {
+    let shouldRemove = false;
+    mutations.forEach(mutation => {
+      mutation.addedNodes.forEach(node => {
+        if (node.nodeType === 1) { // Element node
+          const text = node.textContent || node.innerText || '';
+          const id = node.id || '';
+          const className = node.className || '';
+          if (text.includes('翻訳') || text.includes('Translate') ||
+              id.includes('translate') || className.includes('translate') ||
+              (node.tagName === 'IFRAME' && node.src?.includes('translate'))) {
+            shouldRemove = true;
+          }
+        }
+      });
+    });
+    if (shouldRemove) {
+      removeTranslateElements();
+    }
+  });
+  
+  // bodyが存在する場合は即座に監視開始、なければ待機
+  if (document.body) {
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class', 'id']
+    });
+  } else {
+    document.addEventListener('DOMContentLoaded', () => {
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['style', 'class', 'id']
+      });
+    });
+  }
+  
+  // より頻繁にチェック（100ms間隔）
+  setInterval(removeTranslateElements, 100);
+  
+  // ページ読み込み完了後も継続的にチェック
+  window.addEventListener('load', () => {
+    setInterval(removeTranslateElements, 100);
+  });
+})();
+
 /* ===== ランタイム設定 ===== */
 let IMAGES=[], DISPLAY_MS=8000, FADE_MS=3000, KEN_BURNS=false;
 

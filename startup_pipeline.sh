@@ -94,7 +94,80 @@ if command -v chromium-browser > /dev/null 2>&1; then
     pkill -f chromium-browser || true
     sleep 2
     
-    # Kioskモードで起動
+    # Chromiumの設定ファイルで翻訳機能を無効化
+    CHROMIUM_PREFS_DIR="$HOME/.config/chromium/Default"
+    CHROMIUM_PREFS_FILE="$CHROMIUM_PREFS_DIR/Preferences"
+    if [ ! -d "$CHROMIUM_PREFS_DIR" ]; then
+        mkdir -p "$CHROMIUM_PREFS_DIR"
+    fi
+    
+    # Preferencesファイルが存在する場合は編集、存在しない場合は作成
+    if [ -f "$CHROMIUM_PREFS_FILE" ]; then
+        # PythonでJSONを編集（より安全）
+        python3 << EOF
+import json
+import os
+
+prefs_file = "$CHROMIUM_PREFS_FILE"
+try:
+    with open(prefs_file, 'r', encoding='utf-8') as f:
+        prefs = json.load(f)
+except (FileNotFoundError, json.JSONDecodeError):
+    prefs = {}
+
+# 翻訳機能を完全に無効化
+if 'translate' not in prefs:
+    prefs['translate'] = {}
+prefs['translate']['enabled'] = False
+prefs['translate']['denied_count'] = {}
+prefs['translate']['denied_count']['ja'] = 999999
+prefs['translate']['accepted_count'] = {}
+
+# 言語設定
+if 'intl' not in prefs:
+    prefs['intl'] = {}
+prefs['intl']['selected_languages'] = 'ja'
+prefs['intl']['accept_languages'] = 'ja,ja-JP'
+
+# 翻訳UIを無効化
+if 'translate_denied_count' not in prefs:
+    prefs['translate_denied_count'] = {}
+prefs['translate_denied_count']['ja'] = 999999
+
+# 設定を保存
+with open(prefs_file, 'w', encoding='utf-8') as f:
+    json.dump(prefs, f, ensure_ascii=False, indent=2)
+EOF
+        log "Chromium preferences updated to disable translate"
+    else
+        # 新規作成
+        python3 << EOF
+import json
+import os
+
+prefs_file = "$CHROMIUM_PREFS_FILE"
+os.makedirs(os.path.dirname(prefs_file), exist_ok=True)
+
+prefs = {
+    'translate': {
+        'enabled': False,
+        'denied_count': {'ja': 999999},
+        'accepted_count': {}
+    },
+    'intl': {
+        'selected_languages': 'ja',
+        'accept_languages': 'ja,ja-JP'
+    },
+    'translate_denied_count': {'ja': 999999}
+}
+
+with open(prefs_file, 'w', encoding='utf-8') as f:
+    json.dump(prefs, f, ensure_ascii=False, indent=2)
+EOF
+        log "Chromium preferences created with translate disabled"
+    fi
+    
+    # Kioskモードで起動（より強力なフラグを追加）
     chromium-browser \
         --kiosk \
         --noerrdialogs \
@@ -102,9 +175,14 @@ if command -v chromium-browser > /dev/null 2>&1; then
         --no-first-run \
         --fast \
         --fast-start \
-        --disable-features=TranslateUI \
+        --disable-features=TranslateUI,Translate,TranslateNewUX \
+        --disable-translate \
+        --disable-component-extensions-with-background-pages \
+        --lang=ja \
+        --accept-lang=ja,ja-JP \
         --disk-cache-dir=/dev/null \
         --password-store=basic \
+        --disable-background-networking \
         http://localhost:8000/static/start.html \
         >> "$LOG_FILE" 2>&1 &
     
