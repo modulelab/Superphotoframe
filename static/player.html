@@ -48,6 +48,7 @@
     padding:var(--m);display:grid;place-items:center;
     background:transparent;z-index:1;
   }
+  .margin-wrap.right-edge{ padding:var(--m) var(--m) var(--m) 0; }
 
   .photo{
     width:100%;height:100%;
@@ -61,6 +62,7 @@
   .center{object-position:50% 50%}
   .bottom{object-position:50% 100%}
   .top{object-position:50% 0%}
+  .right{object-position:100% 50%}
 
   .hud{
     position:fixed;left:12px;bottom:12px;
@@ -493,7 +495,7 @@ let photoIdx=0, paused=false, timer=null;
 let currentNode=null, fadingNode=null, lastLayout=null;
 
 /* ===== レイアウト選択 ===== */
-const BASE_WEIGHTS={1:0.34,2:0.33,3:0.33};
+const BASE_WEIGHTS={1:0.25,2:0.25,3:0.25,4:0.25};
 const REPEAT_PROB_FOR_123=0.30;
 
 function chooseWeighted(weights){
@@ -527,6 +529,7 @@ function makeNode(src, layout){
   if(layout===1) img.classList.add('center');
   if(layout===2) img.classList.add('bottom');
   if(layout===3) img.classList.add('top');
+  if(layout===4){ img.classList.add('right'); wrap.classList.add('right-edge'); }
   if(KEN_BURNS){
     img.style.transform='scale(1.02)';
     requestAnimationFrame(()=> img.style.transform='scale(1.0)');
