@@ -80,10 +80,8 @@ https://downloads.raspberrypi.com/raspios_oldstable_arm64/images/raspios_oldstab
 
 #### 1-4. SD カードへ書き込み完了後、安全に取り外す。  
 
-  
 
-
-
+<br>
 
 ### 2. メディア／ネットワーク準備
 - USBメモリをfat32,exFATでフォーマット
@@ -95,14 +93,18 @@ https://downloads.raspberrypi.com/raspios_oldstable_arm64/images/raspios_oldstab
 - NAS / DLNA を利用する場合のみ `credentials.txt` に認証情報を設定。  
 <small>適宜Nas設定からDLNAアクセス用のユーザーを作るなどし情報を入力してください。</small>
 
+<br>
+
 ### 3. 本体の組み立て
  - build guideを見て筐体を組み立ててください。
  - １で作ったSDを挿入。USBメモリを差し込み（ブルーのポート）
 
+<br>
 
 ### 4. SuperPhotoframeのインストール
  - PCのターミナルからSSH接続を行い、ターミナルからPi4を操作、必要なソフトウェアを導入します。
  - ターミナルで以下を入力し実行、SSH接続するPi4のIPを特定します（IPは「192.168.xx.xx」のような形式)
+<br>
 ```bash
  ping raspiframe.local
 ```
@@ -110,10 +112,10 @@ https://downloads.raspberrypi.com/raspios_oldstable_arm64/images/raspios_oldstab
 ```bash
 ssh jd@192.168.xx.xx
 ```
-
+<br>
 SSH接続できた状態で以下を順に実行していきます。  
 <small>※ターミナルでユーザー名、コマンド入力蘭が出ている状態が次のコマンドを実行できる状態です。</small>
-
+<br>
 ```bash
 sudo apt install -y git python3 python3-venv python3-pip
 ```
@@ -126,8 +128,9 @@ sudo apt install -y nodejs
 ```bash
 sudo reboot
 ```
+<br>
 #再起動を待ってGUIのデスクトップが表示されたら再度SSH接続する
-
+<br>
 ```bash
 cd ~
 git clone https://github.com/modulelab/Superphotoframe.git
@@ -145,24 +148,25 @@ pip install -r requirements.txt
 chmod +x setup_dlna.sh
 ./setup_dlna.sh
 ```
+<br>
 上記実行中にコマンドラインに質問が表示されます。以下のように回答。  
 - Install rotary encoder service? (y/n) :y enter
 - Configure display rotation? :enter(skip)
 - Force HDMI hotplug detection? (recommended for photo frames) (y/n): y enter
 - Configure auto-login? (y/n) :y enter
-
+<br>
 
 ```bash
 sudo raspi-config
 ```
 - PCのBIOSのような設定画面が立ち上がります。system setting > s7 splash screen に進み「no」を選択後 > 「finish」へ進む  
 ※カーソルキーでメニューを移動してenterで確定
-
+<br>
 ```bash
 sudo reboot
 ```
 これで全て完了です🎉  
-
+<br>
 - 起動後表示されるQRコードをスマホで読み込み、設定画面に入ります。
 - 設定画面から表示したいフォルダを選択、保存。スライドショーが始まります。
 - 必要に応じてマージン、１枚の秒数など表示設定を行なって保存してください。
