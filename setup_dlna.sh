@@ -21,10 +21,32 @@ sudo apt-get update
 sudo apt-get install -y \
     avahi-utils \
     cifs-utils \
+    python3-venv \
     python3-pip \
+    i2c-tools \
     chromium-browser \
     x11-xserver-utils \
     unclutter
+
+# 1.5 I2C を恒久的に有効化（DRV2605L 用）
+echo ""
+echo "Step 1.5: Enabling I2C (for DRV2605L haptic)..."
+# config.txt の場所を判定
+if [ -f /boot/firmware/config.txt ]; then
+    I2C_CONFIG_FILE="/boot/firmware/config.txt"
+else
+    I2C_CONFIG_FILE="/boot/config.txt"
+fi
+# 必要行を追記（重複は避ける）
+sudo grep -q '^dtoverlay=i2c1' "$I2C_CONFIG_FILE" || echo 'dtoverlay=i2c1' | sudo tee -a "$I2C_CONFIG_FILE" >/dev/null
+sudo grep -q '^dtparam=i2c_arm=on' "$I2C_CONFIG_FILE" || echo 'dtparam=i2c_arm=on' | sudo tee -a "$I2C_CONFIG_FILE" >/dev/null
+# i2c-dev を常時ロード
+echo 'i2c-dev' | sudo tee /etc/modules-load.d/i2c-dev.conf >/dev/null
+# ユーザーを i2c グループに追加（再ログイン後に有効）
+if getent group i2c >/dev/null 2>&1; then
+    sudo adduser "$CURRENT_USER" i2c >/dev/null 2>&1 || true
+fi
+echo "✓ I2C enabled in $I2C_CONFIG_FILE, i2c-dev autoloaded, user added to i2c group"
 
 # 2. Pythonパッケージのインストール（仮想環境を使用）
 echo ""
