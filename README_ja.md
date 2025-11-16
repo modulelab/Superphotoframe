@@ -103,15 +103,17 @@ https://downloads.raspberrypi.com/raspios_oldstable_arm64/images/raspios_oldstab
 
 ### 4. SuperPhotoframeのインストール
  - PCのターミナルからSSH接続を行い、ターミナルからPi4を操作、必要なソフトウェアを導入します。
- - ターミナルで以下を入力し実行、SSH接続するPi4のIPを特定します（IPは「192.168.xx.xx」のような形式)
+ - ターミナルで以下を入力し実行、SSH接続するPi4のIPを特定します（IPは「192.168.xx.xx」のような形式）
 <br>
 ```bash
- ping raspiframe.local
+ping raspiframe.local
 ```
- - 以下をターミナルで実行、特定したIPに対してSSH接続を行います。
+- 以下をターミナルで実行、特定したIPに対してSSH接続を行います。
+
 ```bash
 ssh jd@192.168.xx.xx
 ```
+
 <br>
 SSH接続できた状態で以下を順に実行していきます。  
 <small>※ターミナルでユーザー名、コマンド入力蘭が出ている状態が次のコマンドを実行できる状態です。</small>
