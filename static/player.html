@@ -31,12 +31,16 @@
 
 
   :root{
+    /* 既存 */
     --fade: 3s;          /* フェード秒数（JSで上書き） */
     --zoomdur: 12s;      /* Ken Burns用（JSで上書き） */
     --m: 5vmin;          /* 常に最低5vmin（JSで max(5vmin, 設定%) に上書き） */
     --bg: #fafafa;
     --radius: 12px;
-    --frame-h: 88vh;  /* ← ここで枠の高さを固定（例: 85%） */
+    /* 表示窓の基準高さ（既定は全高＝上下帯なし） */
+    --frame-h: 100vh;
+    /* キャプション表示時に確保する下側の白帯（px）。既定0で帯なし */
+    --band-bottom: 0px;
   }
 
   .margin-wrap{
@@ -69,18 +73,16 @@
 
 /* letterbox 内のオーバーレイとして配置 */
 .caption{
-  position:absolute;
-  left:0; right:0; bottom:25px;
-  padding:0 30px;
+  position:relative;
+  width:100%;
+  padding: 8px 30px;             /* 帯内の余白 */
   display:none;
-  justify-content:space-between;  /* ← 左右に配置 */
-  align-items:flex-end;
+  justify-content:space-between;  /* 左右に配置 */
+  align-items:center;
   pointer-events:none;
-  z-index:10;
   color:#000;
   font:12px/1.2 system-ui, sans-serif;
-  text-shadow: 0 0 2px rgba(255,255,255,0.6);
-  letter-spacing: 0.2em;  /* ← 文字間を広げる */
+  letter-spacing: 0.2em;
 }
 
 
@@ -202,18 +204,34 @@
   position:fixed; inset:0;
   width:100vw; height:100vh;
   background:#000;               /* 黒帯の色 */
-  display:grid; place-items:center;
+  /* 画像窓は上揃え、横は中央寄せ */
+  display:grid; 
+  align-items:start; 
+  justify-items:center;
 }
 
 /* 見せたい“窓”の領域（ここにだけ写真を表示） */
 .letterbox{
   width:100vw;
-  height:var(--frame-h,85vh);    /* ← 黒帯の厚み調整は --frame-h だけでOK */
+  /* 下部帯ぶんを差し引いて画像表示領域を確保。小数点丸めの隙間防止に+1px */
+  height: calc(100vh - var(--band-bottom, 0px) + 1px);
   max-height:100vh;
   position:relative;
   overflow:hidden;               /* 枠外は見せない */
   background:#fafafa;               /* 枠内の下地も黒で統一（好みで #111 等に） */
 }
+
+/* 画面下に出す白帯（キャプション用） */
+.bottom-band{
+  position:fixed; left:0; right:0; bottom:0; height: var(--band-bottom, 0px);
+  background: var(--bg, #fafafa);
+  border-top: none;
+  display:none;                  /* デフォルトは非表示 */
+  /* キャプションを帯の上端に揃える */
+  align-items:flex-start;
+  z-index:9000;                  /* 画像より上、QR(10000)より下 */
+}
+body.caption-on .bottom-band{ display:flex; }
 
 /* 既存の .stage はこのままでOK（位置は letterbox 内で絶対配置） */
 .stage{ position:absolute; inset:0; }
@@ -249,8 +267,10 @@ div[style*="position: absolute"][style*="z-index"] {
 <div class="viewport">
   <div class="letterbox">
     <div class="stage" id="stage"></div>
+  </div>
 
-    <!-- ↓ これを letterbox の中へ -->
+  <!-- 画面下の白帯（キャプション表示用） -->
+  <div class="bottom-band" id="bottomBand">
     <div class="caption" id="caption">
       <span class="cap-left"></span>
       <span class="cap-right"></span>
@@ -259,9 +279,7 @@ div[style*="position: absolute"][style*="z-index"] {
 </div>
 
 
-  <div class="hud" id="hud">←/→ PREV/NEXT　<code>SPACE</code> PAUSE</div>
-
-<div class="busy-overlay" id="busy">
+  <div class="busy-overlay" id="busy">
   <div class="busy-box">
     <div class="busy-spinner"></div>
     <div class="busy-msg" id="busyMsg">BUILDING INDEX...</div>
@@ -470,13 +488,9 @@ document.documentElement.style.setProperty('--fade',(FADE_MS/1000)+'s');
 document.documentElement.style.setProperty('--zoomdur',Math.max(0,DISPLAY_MS-100)/1000+'s');
 
 const stage=document.getElementById('stage');
-const hud=document.getElementById('hud');
 
 let photoIdx=0, paused=false, timer=null;
 let currentNode=null, fadingNode=null, lastLayout=null;
-
-/* HUDを数秒後にフェードアウト */
-setTimeout(()=>{ hud.style.opacity=0; }, 8000);
 
 /* ===== レイアウト選択 ===== */
 const BASE_WEIGHTS={1:0.34,2:0.33,3:0.33};
@@ -632,6 +646,12 @@ async function fetchConfig(){
     document.documentElement.style.setProperty('--m', finalMargin+'vmin');
     KEN_BURNS=!!c.ken_burns;
     window.SHOW_CAPTION = !!c.show_caption;
+    // キャプション表示時は下部白帯を有効化
+    if (window.SHOWING_CAPTION_INIT !== window.SHOW_CAPTION) {
+      document.body.classList.toggle('caption-on', window.SHOW_CAPTION);
+      document.documentElement.style.setProperty('--band-bottom', window.SHOW_CAPTION ? '50px' : '0px');
+      window.SHOWING_CAPTION_INIT = window.SHOW_CAPTION;
+    }
     document.documentElement.style.setProperty('--fade',(FADE_MS/1000)+'s');
     document.documentElement.style.setProperty('--zoomdur',Math.max(0,DISPLAY_MS-100)/1000+'s');
     autoplay();
