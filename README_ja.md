@@ -143,7 +143,6 @@ cd Superphotoframe
 git checkout v1.0.0
 ```
 　
-
 ```bash
 python3 -m venv ~/raspiframe-venv
 source ~/raspiframe-venv/bin/activate
