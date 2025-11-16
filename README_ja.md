@@ -39,7 +39,7 @@ github.com/modulelab/Superphotoframe
 - Ken Burns効果（ズーム）
 - キャプション表示（機種名・日付）
 - 日付スクラブ機能(ロータリーエンコーダー)
-- ネイティブ解像度表示（1024×600 など、Wayland上で `wlr-randr` により設定）
+- ネイティブ解像度表示<small>（1024×600 など、Wayland上で `wlr-randr` により設定）</small>
 
 ### 🌐 ネットワーク機能
 - **DLNA/SMB 自動検出とマウント**
@@ -79,24 +79,28 @@ https://downloads.raspberrypi.com/raspios_oldstable_arm64/images/raspios_oldstab
      
 
 #### 1-4. SD カードへ書き込み完了後、安全に取り外す。  
+
   
-  
-  
+
+
+
+
 ### 2. メディア／ネットワーク準備
 - USBメモリをfat32,exFATでフォーマット
 - USB メモリに `wifi.txt`, `credentials.txt`, 「Photo」フォルダ を配置。  
-  ※USB.zipにテンプレートがあるため、これを解凍しそのままUSBの1階層目に配置ください。
+  <small>※USB.zipにテンプレートがあるため、これを解凍しそのままUSBの1階層目に配置ください。</small>
 - 「Photo」フォルダに写真をフォルダ分けして格納、20xx、など年度のフォルダ分け推奨  
-　　※格納する写真は長辺1500px程度にリサイズください。
+　 <small>※格納する写真は長辺1500px程度にリサイズください。写真が大きいと動作が重くなることがあります。</small>
 - 以降写真を追加したい場合適宜追加可能。
-- NAS / DLNA を利用する場合は `credentials.txt` に認証情報を設定。
+- NAS / DLNA を利用する場合のみ `credentials.txt` に認証情報を設定。  
+<small>適宜Nas設定からDLNAアクセス用のユーザーを作るなどし情報を入力してください。</small>
 
 ### 3. 本体の組み立て
  - build guideを見て筐体を組み立ててください。
  - １で作ったSDを挿入。USBメモリを差し込み（ブルーのポート）
 
 
-### 4. Superphotoframeのインストール
+### 4. SuperPhotoframeのインストール
  - PCのターミナルからSSH接続を行い、ターミナルからPi4を操作、必要なソフトウェアを導入します。
  - ターミナルで以下を入力し実行、SSH接続するPi4のIPを特定します（IPは「192.168.xx.xx」のような形式)
 ```bash
@@ -108,7 +112,7 @@ ssh jd@192.168.xx.xx
 ```
 
 SSH接続できた状態で以下を順に実行していきます。  
-※ターミナルでユーザー名、コマンド入力蘭が出ている状態が次のコマンドを実行できる状態です。
+<small>※ターミナルでユーザー名、コマンド入力蘭が出ている状態が次のコマンドを実行できる状態です。</small>
 
 ```bash
 sudo apt install -y git python3 python3-venv python3-pip
