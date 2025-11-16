@@ -146,6 +146,7 @@ User=${CURRENT_USER}
 WorkingDirectory=${SCRIPT_DIR}
 Environment="PATH=/usr/local/bin:/usr/bin:/bin"
 Environment="ROTARY_WS_URL=ws://127.0.0.1:8000/ws/rotary"
+Environment="ROT_SW=22"
 ExecStart=${PYTHON_CMD} ${SCRIPT_DIR}/rotary.py
 Restart=always
 RestartSec=5
