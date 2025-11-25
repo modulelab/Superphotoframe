@@ -1,146 +1,189 @@
-# Raspiframe - デジタルフォトフレーム
+# SuperPhotoframe - デジタルフォトフレーム
+SuperPhotoframeはRaspberry Pi ベースの高速・安定・ミニマルを追求したデジタルフォトフレーム。  
+IoTプロダクトでありがちな接続切れや認証エラーのストレスを排除、エディトリアルのような美しいレイアウトの写真を日常に溶け込ませ、静かな写真体験を提供します。  
 
-Raspberry Piベースのデジタルフォトフレームシステム
+世界中で調達可能な汎用部品だけで低コストでDIYが可能です(≒ $2~300)    
+※資材詳細はbuild guideを参照
 
+
+## ライセンス
+このプロジェクトは **CC BY-NC 4.0**（Creative Commons Attribution-NonCommercial 4.0 International）ライセンスの下で公開されています。
+
+- ✅ 個人利用、改変・再配布OK（非営利目的）での使用は自由
+- ✅ クレジット表示が必要
+- ❌ 商用利用は禁止
+詳細: https://creativecommons.org/licenses/by-nc/4.0/
+
+**© 2025 MODULE LAB** — Open Source under CC BY-NC 4.0  
+github.com/modulelab/Superphotoframe  
+商用利用をご希望の場合は、作者までお問い合わせください。  
+  
 ## システム要件
 
-- **ハードウェア**: Raspberry Pi 3/4/5
-- **OS**: Raspberry Pi OS (Debian 11 Bullseye以降推奨)
-- **Python**: 3.9以上
-- **ディスプレイ**: HDMI接続可能なモニター
-- **ストレージ**: 8GB以上のmicroSDカード
-- **ネットワーク**: WiFiまたは有線LAN
+- **ハードウェア**: Raspberry Pi 4（推奨: 4GB以上）
+- **OS**: Raspberry Pi OS Bookworm legasy 64bit（Wayland/labwc）
+- **Python**: 3.11 付属（システム）または同等
+- **ストレージ**: 32GB以上のmicroSDカード
+- **ネットワーク**: WiFi
 
 ## 主な機能
+
+### 💡 想定ユースケース
+- リビングやキッチンに静かに写真を流したい人
+- 店舗のサイネージ代わりのミニマルなフォトフレーム用途
+- NAS・USB・クラウドの写真を日常で自然に楽しみたい人
 
 ### 📸 写真表示
 - 自動スライドショー
 - フェードイン/アウト効果
 - Ken Burns効果（ズーム）
-- EXIF情報表示（カメラ機種、日付、露出）
-- 日付スクラブ機能
+- キャプション表示（機種名・日付）
+- 日付スクラブ機能(ロータリーエンコーダー)
+- ネイティブ解像度表示<small>（1024×600 など、Wayland上で `wlr-randr` により設定）</small>
 
 ### 🌐 ネットワーク機能
-- **DLNA/SMB自動検出とマウント**
-- **USBメモリからのWIFI自動設定**
+- **DLNA/SMB 自動検出とマウント**
+- **USBメモリからの Wi‑Fi 自動設定**
 - Web設定画面
-- QRコード経由の簡単アクセス
+- QRコード経由の設定画面アクセス
 
 ### 💾 写真ソース
 1. **USBメモリ** - `Photo/`フォルダから直接読み込み
 2. **NAS/DLNA** - ネットワーク上のメディアサーバー
-3. **ローカルストレージ** - 固定パス
 
 ### 🎮 操作方法
 - ロータリーエンコーダー（回転/押し込み）
-- キーボード（矢印キー、スペース）
-- Webインターフェース
+- ハプティックフィードバック（DRV2605L／I2C）
 
 ## セットアップ
 
-### 0. リポジトリのクローン
 
+### 1. OS イメージの準備
+#### 1-1.RaspberryPi OSのダウンロード
 ```bash
-# SSHまたはHTTPSでクローン
-git clone https://github.com/modulelab/Superphotoframe.git
-cd Superphotoframe
+https://downloads.raspberrypi.com/raspios_oldstable_arm64/images/raspios_oldstable_arm64-2025-10-02/2025-10-01-raspios-bookworm-arm64.img.xz
 ```
 
-### 1. セットアップスクリプトの実行
+#### 1-2. Raspberry Pi Imager でOSをSDカードに書き込む
+  - RaspberryPiデバイスはPi4を選択
+  - OSでUSE custom Image > １でダウンロードしたimgを選択
+  - 書き込み先のSDを選択  
+  
+#### 1-3. 「設定を編集する」
+   - Host名：raspiframe
+   - User:jd 
+   - Password:任意
+   - Wi-Fi SSID・パスワード
+   サービスタブへ移動
+   - SSH 有効化にチェック（パスワード認証）  
+     
+
+#### 1-4. SD カードへ書き込み完了後、安全に取り外す。  
+
+
+&nbsp;
+
+### 2. メディア／ネットワーク準備
+- USBメモリをfat32,exFATでフォーマット
+- USB メモリに `wifi.txt`, `credentials.txt`, 「Photo」フォルダ を配置。  
+  <small>※USB.zipにテンプレートがあるため、これを解凍しそのままUSBの1階層目に配置ください。</small>
+- 「Photo」フォルダに写真をフォルダ分けして格納、20xx、など年度のフォルダ分け推奨  
+　 <small>※格納する写真は長辺1500px程度にリサイズください。写真が大きいと動作が重くなることがあります。</small>
+- 以降写真を追加したい場合適宜追加可能。
+- NAS / DLNA を利用する場合のみ `credentials.txt` に認証情報を設定。  
+<small>適宜Nas設定からDLNAアクセス用のユーザーを作るなどし情報を入力してください。</small>
+
+&nbsp;
+
+### 3. 本体の組み立て
+ - build guideを見て筐体を組み立ててください。
+ - １で作ったSDを挿入。USBメモリを差し込み（ブルーのポート）
+
+&nbsp;
+
+### 4. SuperPhotoframeのインストール
+ - PCのターミナルからSSH接続を行い、ターミナルからPi4を操作、必要なソフトウェアを導入します。
+ - ターミナルで以下を入力し実行、SSH接続するPi4のIPを特定します（IPは「192.168.xx.xx」のような形式）
+
+```bash
+ping raspiframe.local
+```
+- 以下をターミナルで実行、特定したIPに対してSSH接続を行います。
+
+```bash
+ssh jd@192.168.xx.xx
+```
+
+&nbsp;
+SSH接続できた状態で以下を順に実行していきます。  
+<small>※ターミナルでユーザー名、コマンド入力蘭が出ている状態が次のコマンドを実行できる状態です。</small>
+&nbsp;
+
+
+```bash
+sudo apt install -y git python3 python3-venv python3-pip
+```
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+```bash
+sudo reboot
+```
+&nbsp;
+#再起動を待ってGUIのデスクトップが表示されたら再度SSH接続する
+&nbsp;
+
+```bash
+cd ~
+git clone https://github.com/modulelab/Superphotoframe.git
+cd Superphotoframe
+git checkout v1.0.0
+```
+　
+```bash
+python3 -m venv ~/raspiframe-venv
+source ~/raspiframe-venv/bin/activate
+pip install -r requirements.txt
+```
 
 ```bash
 chmod +x setup_dlna.sh
 ./setup_dlna.sh
 ```
 
-このスクリプトは以下を実行します：
-- 必要なシステムパッケージのインストール（avahi-utils, cifs-utils, chromium-browser等）
-- Pythonライブラリのインストール（`requirements.txt`から）
-- USB自動マウント設定（udevルール）
-- systemdサービスの登録と自動起動設定
-- スクリーンセーバーの無効化
+上記実行中にコマンドラインに質問が表示されます。以下のように回答。  
+- Install rotary encoder service? (y/n) :y enter
+- Configure display rotation? :enter(skip)
+- Force HDMI hotplug detection? (recommended for photo frames) (y/n): y enter
+- Configure auto-login? (y/n) :y enter
 
-### 2. USBメモリの準備
-
-**重要**: セットアップ後、USBメモリは自動的に`/mnt/usb`にマウントされます（ユーザー名非依存）
-
-USBメモリのルートに以下のファイルを作成：
-
-#### `wifi.txt` - WiFi設定（必須）
-```
-ssid=YourWiFiNetworkName
-password=YourWiFiPassword
-country=JP
-```
-
-#### `credentials.txt` - NAS認証情報（NAS使用時のみ）
-```
-username=your_nas_username
-password=your_nas_password
-```
-
-#### `Photo/` - 写真フォルダ（オプション）
-USBメモリに直接写真を保存する場合は`Photo`フォルダを作成して画像を配置
-
-### 3. 起動
 
 ```bash
-# 再起動（推奨）
-sudo reboot
-
-# または手動起動
-sudo systemctl start raspiframe
-sudo systemctl start raspiframe-kiosk
+sudo raspi-config
 ```
 
+- PCのBIOSのような設定画面が立ち上がります。system setting > s7 splash screen に進み「no」を選択後 > 「finish」へ進む  
+※カーソルキーでメニューを移動してenterで確定
+
+```bash
+sudo reboot
+```
+これで全て完了です🎉  
+<br>
+- 起動後表示されるQRコードをスマホで読み込み、設定画面に入ります。
+- 設定画面から表示したいフォルダを選択、保存。スライドショーが始まります。
+- 必要に応じてマージン、１枚の秒数など表示設定を行なって保存してください。
+
 ## 起動シーケンス
-
 1. **WiFi設定** - USBから`wifi.txt`を読み込み、自動接続
-2. **サービス起動** - Raspiframeバックエンドが起動
-3. **QR生成** - 設定画面へのQRコードを生成
-4. **Kioskモード** - Chromiumで全画面表示
+2. **サービス起動** - バックエンド/API が起動（uvicorn）
+3. **表示設定** - Wayland上で 1024×600/縦回転 を適用（wlr-randr）
+4. **Kioskモード** - Chromium が `static/start.html` を全画面表示
+5. **プレーヤー** - `static/player.html` に遷移してスライド開始
 
-## 使い方
-
-### 初回セットアップ
-1. USBメモリを準備（wifi.txt必須）
-2. Raspberry Piに挿入して起動
-3. WiFi接続後、QRコードが表示される
-4. スマホでQRを読み取り、設定画面を開く
-
-### NASからの写真読み込み
-1. 設定画面で「ENABLE NAS/DLNA」をチェック
-2. 「DISCOVER」ボタンでNASを検出
-3. 検出されたNASを選択して「MOUNT」
-4. 共有フォルダ名を入力（例：`photo_resized`）
-5. フォルダを選択して「Add This Folder」
-6. 「Save」で保存
-
-### USBメモリからの写真読み込み
-1. USBメモリに`Photo/`フォルダを作成
-2. 写真を配置
-3. 設定画面で「CHECK USB PHOTO」をクリック
-4. 「ADD TO SELECTION」で追加
-5. 「Save」で保存
-
-### 表示設定
-- **Display (ms)**: 各写真の表示時間
-- **Fade (ms)**: フェード効果の時間
-- **Margin %**: 画面の余白
-- **Ken Burns**: ズーム効果のON/OFF
-- **Caption**: EXIF情報表示のON/OFF
-- **Timezone**: タイムゾーン設定
-
-## 操作方法
-
-### キーボード
-- `←/→` - 前/次の写真
-- `Space` - 一時停止/再生
-- `O` - 日付オーバーレイ表示
-
-### ロータリーエンコーダー
-- 回転（左/右） - 日付単位でスクラブ
-- 押し込み - QRコード表示
 
 ## API仕様
 
@@ -165,8 +208,8 @@ sudo systemctl start raspiframe-kiosk
 
 ## ファイル構成
 
-```
-raspiframe/
+```bash
+Superphotoframe/
 ├── app/
 │   └── main.py              # メインアプリケーション
 ├── static/
@@ -188,94 +231,19 @@ raspiframe/
 ├── requirements.txt        # Python依存パッケージ
 ├── wifi.txt.sample         # WiFi設定サンプル
 ├── credentials.txt.sample  # 認証情報サンプル
-└── README.md               # このファイル
+└── README_ja.md            # このファイル
 ```
 
-**注意**: 
-- `raspiframe.service`と`raspiframe-kiosk.service`は`setup_dlna.sh`によって自動生成されます
-- `data/config.json`と`data/selection.json`は初回起動時に自動生成されます
-
-## トラブルシューティング
-
-### WiFi接続できない
-```bash
-# ログ確認
-tail -f /var/log/raspiframe_startup.log
-
-# 手動設定
-sudo python3 setup_wifi_from_usb.py
-```
-
-### NASマウント失敗
-```bash
-# サービスログ確認
-sudo journalctl -u raspiframe -f
-
-# credentials.txtの確認
-cat /media/usb/credentials.txt
-
-# 手動マウントテスト
-sudo mount -t cifs //192.168.1.100/share /mnt/dlna/test \
-  -o username=user,password=pass
-```
-
-### 画面が表示されない
-```bash
-# Kioskサービス確認
-sudo systemctl status raspiframe-kiosk
-
-# Chromiumプロセス確認
-ps aux | grep chromium
-
-# 手動起動
-DISPLAY=:0 chromium-browser --kiosk http://localhost:8000/static/player.html
-```
-
-### QRコードが表示されない
-```bash
-# QRファイル確認
-ls -la /home/jd/raspiframe/static/qr2.png
-
-# サービス再起動
-sudo systemctl restart raspiframe
-```
 
 ## セキュリティに関する注意
-
 ⚠️ **重要**: 
 - `wifi.txt`と`credentials.txt`は平文で保存されます
-- USBメモリは物理的に安全に保管してください
-- 本番環境では暗号化を検討してください
-- 使用後はUSBメモリを取り外すことを推奨します
-
-## ライセンス
-
-このプロジェクトは **CC BY-NC 4.0**（Creative Commons Attribution-NonCommercial 4.0 International）ライセンスの下で公開されています。
-
-- ✅ 個人・家族での使用は自由
-- ✅ 改変・再配布OK（非営利目的）
-- ✅ クレジット表示が必要
-- ❌ 商用利用は禁止
-
-詳細: https://creativecommons.org/licenses/by-nc/4.0/
-
-商用利用をご希望の場合は、作者までお問い合わせください。
-
-## 作者
-
-**MODULE LAB** (github.com/modulelab/Superphotoframe)
-
-©2025 MODULE LAB Open Source
+-  ゲスト用ネットワークなどの利用をお勧めします
 
 ## 更新履歴
-
-### v2.0 (2025-10)
-- DLNA自動検出機能追加
-- USBからのWiFi設定機能追加
-- USBフォトフォルダ機能追加
-- NAS ON/OFF機能追加
-- 起動パイプライン実装
-
-### v1.0
-- 初期リリース
+### v1.0.0 / v1.0.0-dev.1
+- Wayland/labwc 環境に最適化、1024×600 ネイティブ表示
+- Chromium 翻訳パネルの恒久無効化
+- ロータリー回転・押下および DRV2605L ハプティック対応
+- セットアップの一括自動化（仮想環境・systemd・I2C）
 

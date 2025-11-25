@@ -1,180 +1,230 @@
-# SuperPhotoframe - Digital Photo Frame
+## SuperPhotoframe - Digital Photo Frame
 
-![代替テキスト](readme.jpg)
+![Main image](readme.jpg)
 
 [日本語版はこちら / Japanese version](README_ja.md)
 
-A Raspberry Pi-based digital photo frame system with advanced features.
+SuperPhotoframe is a Raspberry Pi‑based digital photo frame that aims for high speed, stability, and a minimal experience.  
+It eliminates typical IoT frustrations such as random disconnections and authentication errors, and quietly blends editorial‑style, beautifully laid‑out photos into your everyday life.
+
+You can DIY the entire system at low cost (≈ \$200–300) using only off‑the‑shelf parts available worldwide.  
+※ For detailed bill of materials, please refer to the build guide.
+
+## License
+
+This project is released under the **CC BY-NC 4.0** (Creative Commons Attribution-NonCommercial 4.0 International) license.
+
+- ✅ Free to use, modify, and redistribute for **non‑commercial** and personal use  
+- ✅ Attribution is required  
+- ❌ Commercial use is prohibited  
+
+Details: https://creativecommons.org/licenses/by-nc/4.0/
+
+**© 2025 MODULE LAB** — Open Source under CC BY-NC 4.0  
+github.com/modulelab/Superphotoframe  
+For commercial use inquiries, please contact the author.
 
 ## System Requirements
 
-- **Hardware**: Raspberry Pi 3/4/5
-- **OS**: Raspberry Pi OS (Debian 11 Bullseye or later recommended)
-- **Python**: 3.9 or higher
-- **Display**: HDMI-compatible monitor
-- **Storage**: 8GB+ microSD card
-- **Network**: WiFi or Ethernet
+- **Hardware**: Raspberry Pi 4 (recommended: 4GB RAM or more)  
+- **OS**: Raspberry Pi OS Bookworm legacy 64bit (Wayland / labwc)  
+- **Python**: System Python 3.11 or equivalent  
+- **Storage**: 32GB or larger microSD card  
+- **Network**: WiFi  
 
-## Key Features
+## Main Features
+
+### 💡 Intended Use Cases
+
+- Quietly display photos in a living room or kitchen  
+- Minimal digital signage / photo frame use in shops  
+- Naturally enjoy photos stored on NAS, USB, or cloud in daily life  
 
 ### 📸 Photo Display
-- Automatic slideshow
-- Fade in/out effects
-- Ken Burns effect (zoom & pan)
-- EXIF information display (camera model, date, exposure)
-- Date scrubbing functionality
+
+- Automatic slideshow  
+- Fade‑in / fade‑out transitions  
+- Ken Burns effect (zoom)  
+- Caption display (camera model, date)  
+- Date scrub function (via rotary encoder)  
+- Native resolution output<small> (e.g. 1024×600, configured on Wayland using `wlr-randr`)</small>  
 
 ### 🌐 Network Features
-- **DLNA/SMB auto-discovery and mount**
-- **USB WiFi auto-configuration**
-- Web-based settings interface
-- QR code access for easy setup
+
+- **Automatic detection and mount of DLNA / SMB**  
+- **Automatic Wi‑Fi configuration from USB memory**  
+- Web‑based settings screen  
+- QR‑code access to the settings screen  
 
 ### 💾 Photo Sources
-1. **USB Drive** - Direct loading from `Photo/` folder
-2. **NAS/DLNA** - Network media server
-3. **Local Storage** - Fixed paths
 
-### 🎮 Control Methods
-- Rotary encoder (rotate/push)
-- Keyboard (arrow keys, space)
-- Web interface
+1. **USB memory** – Reads directly from the `Photo/` folder  
+2. **NAS / DLNA** – Network media servers  
+
+### 🎮 Controls
+
+- Rotary encoder (rotate / push)  
+- Haptic feedback (DRV2605L / I2C)  
 
 ## Setup
 
-### 0. Clone Repository
+### 1. Prepare the OS Image
+
+#### 1‑1. Download Raspberry Pi OS
 
 ```bash
-git clone https://github.com/modulelab/Superphotoframe.git
-cd Superphotoframe
+https://downloads.raspberrypi.com/raspios_oldstable_arm64/images/raspios_oldstable_arm64-2025-10-02/2025-10-01-raspios-bookworm-arm64.img.xz
 ```
 
-### 1. Run Setup Script
+#### 1‑2. Write OS to the SD card with Raspberry Pi Imager
+
+- For device, select **Raspberry Pi 4**  
+- For OS, choose **Use custom image** and select the image downloaded in step 1  
+- Select the SD card as the write destination  
+
+#### 1‑3. “Edit Settings”
+
+- Hostname: `raspiframe`  
+- User: `jd`  
+- Password: any of your choice  
+- Wi‑Fi SSID and password  
+- Move to the **Services** tab  
+  - Enable **SSH** (password authentication)  
+
+#### 1‑4. After the write is complete, safely eject the SD card.
+
+### 2. Prepare Media and Network
+
+- Format the USB memory as FAT32 or exFAT  
+- Place `wifi.txt`, `credentials.txt`, and the `Photo` folder on the root of the USB memory  
+  <small>※ A template is included in `USB.zip`. Unzip it and place the contents directly in the top level of the USB drive.</small>  
+- Store photos in the `Photo` folder, organized by subfolders. Year‑based folders such as `20xx` are recommended.  
+  <small>※ Resize photos so that the long side is around 1500px. Very large images may cause slow performance.</small>  
+- You can add photos later by simply adding them to the same folder structure.  
+- If you plan to use NAS / DLNA, fill in authentication information in `credentials.txt`.  
+  <small>For example, create a dedicated DLNA user in your NAS settings and enter that information here.</small>  
+
+### 3. Assemble the Main Unit
+
+- Assemble the enclosure following the build guide.  
+- Insert the SD card created in step 1, and plug the USB memory into the blue USB port.  
+
+### 4. Install SuperPhotoframe
+
+- From a PC terminal, connect to the Pi 4 via SSH and install the necessary software from the terminal.  
+- First, run the following commands in the terminal to find the IP address of the Pi 4 (it will look like `192.168.xx.xx`):  
+
+```bash
+ping raspiframe.local
+```
+
+- Then connect via SSH to the identified IP address:  
+
+```bash
+ssh jd@192.168.xx.xx
+```
+
+With SSH connected, run the following commands in order.  
+<small>※ When the terminal is showing a prompt where you can type commands, you are ready to run the next command.</small>  
+
+```bash
+sudo apt install -y git python3 python3-venv python3-pip
+```
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+```bash
+sudo reboot
+```
+
+&nbsp;  
+**After the reboot completes and the GUI desktop appears, connect via SSH again and continue:**  
+
+```bash
+cd ~
+git clone https://github.com/modulelab/Superphotoframe.git
+cd Superphotoframe
+git checkout v1.0.0
+```
+
+```bash
+python3 -m venv ~/raspiframe-venv
+source ~/raspiframe-venv/bin/activate
+pip install -r requirements.txt
+```
 
 ```bash
 chmod +x setup_dlna.sh
 ./setup_dlna.sh
 ```
 
-This script will:
-- Install required system packages (avahi-utils, cifs-utils, chromium-browser, etc.)
-- Install Python libraries (from `requirements.txt`)
-- Configure USB auto-mount (udev rules)
-- Register and enable systemd services
-- Disable screensaver and notifications
+During execution, a few questions will appear in the command line. Answer as follows:  
 
-Interactive configuration during setup:
-- Display rotation (0=landscape, 1=portrait right, 2=upside down, 3=portrait left)
-- HDMI force hotplug (recommended: y)
-- Disable overscan (recommended: y)
-- Auto-login (recommended: y)
+- Install rotary encoder service? (y/n): **y** then Enter  
+- Configure display rotation?: just press **Enter** to skip  
+- Force HDMI hotplug detection? (recommended for photo frames) (y/n): **y** then Enter  
+- Configure auto-login? (y/n): **y** then Enter  
 
-### 2. Prepare USB Drive
-
-**Important**: After setup, USB drives will automatically mount to `/mnt/usb` (user-independent)
-
-Create the following files on the USB drive root:
-
-#### `wifi.txt` - WiFi Configuration (Required)
-```
-ssid=YourWiFiNetworkName
-password=YourWiFiPassword
-country=JP
-```
-
-#### `credentials.txt` - NAS Credentials (NAS use only)
-```
-username=your_nas_username
-password=your_nas_password
-```
-
-#### `Photo/` - Photo Folder (Optional)
-Create this folder and place images if storing photos directly on USB
-
-### 3. Startup
+Next, run:  
 
 ```bash
-# Reboot (recommended)
-sudo reboot
-
-# Or manual start
-sudo systemctl start raspiframe
-sudo systemctl start raspiframe-kiosk
+sudo raspi-config
 ```
+
+- A configuration screen similar to a PC BIOS will appear. Navigate to **System Settings → S7 Splash Screen** and select **“No”**, then move to **“Finish”**.  
+  ※ Use the arrow keys to move the cursor and Enter to confirm.  
+
+Finally:  
+
+```bash
+sudo reboot
+```
+
+That completes the setup 🎉  
+<br>
+- After boot, a QR code will appear on the screen. Scan it with your smartphone to open the settings page.  
+- From the settings page, select the folder you want to display and save. The slideshow will start.  
+- Adjust options such as margins and duration per photo as needed, then save.  
 
 ## Startup Sequence
 
-1. **WiFi Setup** - Reads `wifi.txt` from USB and auto-connects
-2. **Service Start** - Raspiframe backend launches
-3. **QR Generation** - Generates QR code for settings page access
-4. **Kiosk Mode** - Full-screen display via Chromium
-
-## Usage
-
-### Initial Setup
-1. Prepare USB drive (wifi.txt required)
-2. Insert into Raspberry Pi and boot
-3. After WiFi connection, QR code appears on screen
-4. Scan QR code with smartphone to open settings page
-
-### Loading Photos from NAS
-1. Check "ENABLE DLNA ON NAS" in settings
-2. Click "CHECK DISK" button to discover NAS
-3. Select detected NAS and click "MOUNT"
-4. Enter shared folder name (e.g., `Multimedia`)
-5. Browse and select folders, click "ADD THIS FOLDER"
-6. Click "SAVE" to apply
-
-### Loading Photos from USB
-1. Create `Photo/` folder on USB drive
-2. Place images in folder
-3. Click "CHECK USB PHOTO" in settings
-4. Folders are automatically detected
-5. Click "SAVE" to apply
-
-### Display Settings
-- **Display (ms)**: Duration for each photo
-- **Fade (ms)**: Fade effect duration
-- **Margin %**: Screen margins
-- **Ken Burns**: Zoom effect ON/OFF
-- **Caption**: EXIF information display ON/OFF
-- **Timezone**: Timezone setting
-
-## Controls
-
-### Keyboard
-- `←/→` - Previous/Next photo
-- `Space` - Pause/Resume
-- `O` - Toggle date overlay
-
-### Rotary Encoder
-- Rotate (left/right) - Scrub by date
-- Push - Display QR code
+1. **WiFi configuration** – Reads `wifi.txt` from USB and connects automatically  
+2. **Service startup** – Backend / API starts (uvicorn)  
+3. **Display settings** – Applies 1024×600 portrait mode on Wayland (via `wlr-randr`)  
+4. **Kiosk mode** – Chromium launches and shows `static/start.html` in full‑screen  
+5. **Player** – Transitions to `static/player.html` and starts the slideshow  
 
 ## API Specification
 
-### DLNA Endpoints
-- `GET /api/dlna/discover` - Discover DLNA services
-- `GET /api/dlna/status` - Check mount status
-- `POST /api/dlna/mount` - Mount share
-- `POST /api/dlna/unmount` - Unmount share
+### DLNA
 
-### USB Endpoints
-- `GET /api/usb/photo` - USB photo folder information
+- `GET /api/dlna/discover` – Discover DLNA services  
+- `GET /api/dlna/status` – Check mount status  
+- `POST /api/dlna/mount` – Mount  
+- `POST /api/dlna/unmount` – Unmount  
 
-### Settings Endpoints
-- `GET /api/config` - Get configuration
-- `POST /api/config` - Save configuration
-- `GET /api/selection` - Get selected folders
-- `POST /api/selection` - Save selected folders
+### USB
+
+- `GET /api/usb/photo` – USB photo folder information  
+
+### Settings
+
+- `GET /api/config` – Get configuration  
+- `POST /api/config` – Save configuration  
+- `GET /api/selection` – Get selected folders  
+- `POST /api/selection` – Save selected folders  
 
 ### Playlist
-- `GET /api/playlist` - Get image list
-- `GET /api/events` - SSE event stream
+
+- `GET /api/playlist` – Get image list  
+- `GET /api/events` – SSE event stream  
 
 ## File Structure
 
-```
+```bash
 Superphotoframe/
 ├── app/
 │   └── main.py              # Main application
@@ -182,109 +232,38 @@ Superphotoframe/
 │   ├── player.html          # Player screen
 │   ├── settings.html        # Settings screen
 │   ├── logo.png             # Logo image
-│   ├── settinglogo.png      # Settings logo
-│   └── qr2.png             # QR code (auto-generated)
+│   ├── settinglogo.png      # Settings screen logo
+│   └── qr2.png              # QR code (auto-generated)
 ├── data/
-│   ├── config.json.sample  # Configuration sample
-│   └── selection.json.sample # Selection sample
-├── rotary.py               # Rotary encoder handler
-├── setup_dlna.sh           # Setup script
-├── setup_wifi_from_usb.py  # WiFi configuration script
-├── startup_pipeline.sh     # Startup pipeline
-├── usb-mount.sh            # USB auto-mount script
-├── usb-unmount.sh          # USB auto-unmount script
-├── 99-usb-mount.rules      # udev rules
-├── requirements.txt        # Python dependencies
-├── wifi.txt.sample         # WiFi configuration sample
-├── credentials.txt.sample  # Credentials sample
-└── README.md               # This file
+│   ├── config.json.sample   # Configuration file sample
+│   └── selection.json.sample # Selected folder sample
+├── rotary.py                # Rotary encoder script
+├── setup_dlna.sh            # Setup script
+├── setup_wifi_from_usb.py   # WiFi configuration script
+├── startup_pipeline.sh      # Startup pipeline
+├── usb-mount.sh             # USB auto-mount script
+├── usb-unmount.sh           # USB auto-unmount script
+├── 99-usb-mount.rules       # udev rules
+├── requirements.txt         # Python dependencies
+├── wifi.txt.sample          # WiFi settings sample
+├── credentials.txt.sample   # Credentials sample
+└── README.md                # This file
 ```
 
-**Note**: 
-- `raspiframe.service` and `raspiframe-kiosk.service` are auto-generated by `setup_dlna.sh`
-- `data/config.json` and `data/selection.json` are auto-generated on first run
+## Security Notes
 
-## Troubleshooting
+⚠️ **Important**:  
 
-### WiFi Connection Failed
-```bash
-# Check logs
-tail -f /var/log/raspiframe_startup.log
-
-# Manual setup
-sudo python3 setup_wifi_from_usb.py
-```
-
-### NAS Mount Failed
-```bash
-# Check service logs
-sudo journalctl -u raspiframe -f
-
-# Verify credentials
-cat /mnt/usb/credentials.txt
-
-# Test manual mount
-sudo mount -t cifs //192.168.1.100/share /mnt/dlna/test \
-  -o username=user,password=pass
-```
-
-### Display Not Showing
-```bash
-# Check kiosk service
-sudo systemctl status raspiframe-kiosk
-
-# Check Chromium process
-ps aux | grep chromium
-
-# Manual start
-DISPLAY=:0 chromium-browser --kiosk http://localhost:8000/static/player.html
-```
-
-### QR Code Not Displaying
-```bash
-# Check QR file
-ls -la ~/raspiframe/static/qr2.png
-
-# Restart service
-sudo systemctl restart raspiframe
-```
-
-## Security Notice
-
-⚠️ **Important**: 
-- `wifi.txt` and `credentials.txt` are stored in plain text
-- Keep USB drive physically secure
-- Consider encryption for production use
-- Recommend removing USB drive after setup
-
-## License
-
-This project is licensed under **CC BY-NC 4.0** (Creative Commons Attribution-NonCommercial 4.0 International).
-
-- ✅ Free for personal and family use
-- ✅ Modification and redistribution allowed (non-commercial)
-- ✅ Attribution required
-- ❌ Commercial use prohibited
-
-Details: https://creativecommons.org/licenses/by-nc/4.0/
-
-For commercial use inquiries, please contact the author.
-
-## Author
-
-**MODULE LAB** (github.com/modulelab/Superphotoframe)
-
-©2025 MODULE LAB Open Source
+- `wifi.txt` and `credentials.txt` are stored in plain text  
+- We recommend using a guest or isolated network  
 
 ## Changelog
 
-### v1.0 (2025-10)
-- DLNA auto-discovery and mount
-- USB WiFi auto-configuration
-- USB photo folder support
-- NAS ON/OFF toggle
-- Startup pipeline implementation
-- iOS-like UI design
-- Portrait mode support
-- Notification disabling
-- Initial release
+### v1.0.0 / v1.0.0-dev.1
+
+- Optimized for Wayland / labwc environment with 1024×600 native display  
+- Permanently disables Chromium translation panel  
+- Supports rotary rotation / press and DRV2605L haptics  
+- Automates setup end‑to‑end (virtual environment, systemd, I2C)  
+
+
