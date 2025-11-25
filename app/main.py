@@ -880,6 +880,16 @@ async def playlist():
         tzname = "UTC"
 
     sel = load_json(SEL_FILE, {"folders": []})
+    
+    # 初期状態（foldersが空）の場合、USBのPhoto/sampleフォルダを自動選択
+    if not sel.get("folders"):
+        photo_path = find_usb_photo_folder()
+        if photo_path:
+            sample_path = os.path.join(photo_path, "sample")
+            if os.path.exists(sample_path) and os.path.isdir(sample_path):
+                sel["folders"] = [sample_path]
+                save_json(SEL_FILE, sel)
+    
     items: List[Dict[str, Any]] = []
 
     for folder in sel.get("folders", []):
