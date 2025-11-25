@@ -561,7 +561,20 @@ async def set_config(cfg: Dict[str, Any]):
 # ==== 選択フォルダAPI ========================================================
 @app.get("/api/selection")
 async def get_selection():
-    return load_json(SEL_FILE, {"folders": []})
+    sel = load_json(SEL_FILE, {"folders": []})
+    
+    # 初期状態（foldersが空）の場合、USBのPhoto/sampleフォルダを自動選択
+    if not sel.get("folders"):
+        photo_path = find_usb_photo_folder()
+        if photo_path:
+            sample_path = os.path.join(photo_path, "sample")
+            if os.path.exists(sample_path) and os.path.isdir(sample_path):
+                sel["folders"] = [sample_path]
+                save_json(SEL_FILE, sel)
+                # プレイリストを再構築
+                await asyncio.to_thread(_rebuild_playlist)
+    
+    return sel
 
 @app.post("/api/selection")
 async def save_selection(sel: Dict[str, Any]):
