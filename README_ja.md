@@ -61,7 +61,7 @@ github.com/modulelab/Superphotoframe
 ### 1. OS イメージの準備
 #### 1-1.RaspberryPi OSのダウンロード
 ```bash
-https://downloads.raspberrypi.com/raspios_oldstable_arm64/images/raspios_oldstable_arm64-2025-10-02/2025-10-01-raspios-bookworm-arm64.img.xz
+https://github.com/modulelab/Superphotoframe/releases/download/untagged-7cfb2b76434e88283ecf/2025-10-01-raspios-bookworm-arm64.img.xz
 ```
 
 #### 1-2. Raspberry Pi Imager でOSをSDカードに書き込む
@@ -140,7 +140,7 @@ sudo reboot
 cd ~
 git clone https://github.com/modulelab/Superphotoframe.git
 cd Superphotoframe
-git checkout v1.0.0
+git checkout v1.0.1
 ```
 　
 ```bash
