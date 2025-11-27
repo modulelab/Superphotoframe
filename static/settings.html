@@ -205,6 +205,8 @@
 
   <div style="margin-top:10px">
     <button id="saveSys" class="btn btn-primary" style="width:100%;padding:12px">SAVE SYSTEM SETTINGS</button>
+    
+    <button id="shutdownBtn" class="btn" style="width:100%;padding:12px;margin-top:12px;background:#666;color:#fff;border-color:#666">SHUTDOWN SYSTEM</button>
     <div style="margin-top:8px;text-align:center">
       <span id="savingSys" class="muted" style="display:none">
         <span class="loading"></span> Saving…
@@ -864,6 +866,28 @@ if(dlnaDiscoverBtn){
       showToast("SAVE FAILED");
     } finally {
       $("#savingSys").style.display = "none";
+    }
+  };
+
+  // --- Shutdown System ---
+  $("#shutdownBtn").onclick = async ()=>{
+    if (!confirm("システムをシャットダウンしますか？\n\nShutdown the system?")) {
+      return;
+    }
+    try {
+      const res = await fetch("/api/shutdown", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        showToast("SHUTTING DOWN...");
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 2000);
+      } else {
+        showToast("SHUTDOWN FAILED");
+      }
+    } catch (e) {
+      showToast("SHUTDOWN FAILED");
+      console.error("Shutdown error:", e);
     }
   };
 

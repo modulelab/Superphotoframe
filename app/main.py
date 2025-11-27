@@ -1067,6 +1067,17 @@ async def websocket_rotary(ws: WebSocket):
         if ws in ws_clients:
             ws_clients.remove(ws)
 
+# ==== システム終了API ========================================================
+@app.post("/api/shutdown")
+async def shutdown():
+    """システムをシャットダウン"""
+    import subprocess
+    try:
+        subprocess.run(["sudo", "shutdown", "-h", "now"], check=False)
+        return {"ok": True, "message": "Shutting down..."}
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
 # ==== 静的ファイルとルート ===================================================
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 

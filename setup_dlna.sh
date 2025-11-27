@@ -21,52 +21,15 @@ sudo apt-get update
 sudo apt-get install -y \
     avahi-utils \
     cifs-utils \
-    python3-venv \
     python3-pip \
-    i2c-tools \
     chromium-browser \
     x11-xserver-utils \
     unclutter
 
-# 1.5 I2C を恒久的に有効化（DRV2605L 用）
+# 2. Pythonパッケージのインストール
 echo ""
-echo "Step 1.5: Enabling I2C (for DRV2605L haptic)..."
-# config.txt の場所を判定
-if [ -f /boot/firmware/config.txt ]; then
-    I2C_CONFIG_FILE="/boot/firmware/config.txt"
-else
-    I2C_CONFIG_FILE="/boot/config.txt"
-fi
-# 必要行を追記（重複は避ける）
-sudo grep -q '^dtoverlay=i2c1' "$I2C_CONFIG_FILE" || echo 'dtoverlay=i2c1' | sudo tee -a "$I2C_CONFIG_FILE" >/dev/null
-sudo grep -q '^dtparam=i2c_arm=on' "$I2C_CONFIG_FILE" || echo 'dtparam=i2c_arm=on' | sudo tee -a "$I2C_CONFIG_FILE" >/dev/null
-# i2c-dev を常時ロード
-echo 'i2c-dev' | sudo tee /etc/modules-load.d/i2c-dev.conf >/dev/null
-# ユーザーを i2c グループに追加（再ログイン後に有効）
-if getent group i2c >/dev/null 2>&1; then
-    sudo adduser "$CURRENT_USER" i2c >/dev/null 2>&1 || true
-fi
-echo "✓ I2C enabled in $I2C_CONFIG_FILE, i2c-dev autoloaded, user added to i2c group"
-
-# 2. Pythonパッケージのインストール（仮想環境を使用）
-echo ""
-echo "Step 2: Setting up Python virtual environment and installing packages..."
-
-# 仮想環境のパス
-VENV_DIR="${CURRENT_HOME}/raspiframe-venv"
-VENV_PYTHON="${VENV_DIR}/bin/python3"
-
-# 仮想環境が存在しない場合は作成
-if [ ! -d "$VENV_DIR" ]; then
-    echo "Creating virtual environment at $VENV_DIR..."
-    python3 -m venv "$VENV_DIR"
-fi
-
-# 仮想環境にパッケージをインストール
-echo "Installing Python packages in virtual environment..."
-"$VENV_PYTHON" -m pip install --upgrade pip
-"$VENV_PYTHON" -m pip install -r "${SCRIPT_DIR}/requirements.txt"
-echo "✓ Python packages installed in virtual environment"
+echo "Step 2: Installing Python packages..."
+pip3 install -r "${SCRIPT_DIR}/requirements.txt"
 
 # 3. ディレクトリ作成
 echo ""
@@ -78,13 +41,14 @@ sudo mkdir -p /var/log
 sudo touch /var/log/raspiframe_startup.log
 sudo chmod 666 /var/log/raspiframe_startup.log
 
-# 4. sudoers設定（マウント権限）を動的生成
+# 4. sudoers設定（マウント権限・シャットダウン権限）を動的生成
 echo ""
-echo "Step 4: Configuring sudoers for mount/umount..."
+echo "Step 4: Configuring sudoers for mount/umount/shutdown..."
 cat > /tmp/raspiframe-sudoers << EOF
-# Raspiframe: ${CURRENT_USER}ユーザーがパスワードなしでマウント/アンマウントできるようにする
+# Raspiframe: ${CURRENT_USER}ユーザーがパスワードなしでマウント/アンマウント/シャットダウンできるようにする
 ${CURRENT_USER} ALL=(ALL) NOPASSWD: /bin/mount
 ${CURRENT_USER} ALL=(ALL) NOPASSWD: /bin/umount
+${CURRENT_USER} ALL=(ALL) NOPASSWD: /sbin/shutdown
 EOF
 sudo cp /tmp/raspiframe-sudoers /etc/sudoers.d/raspiframe
 sudo chmod 440 /etc/sudoers.d/raspiframe
@@ -94,19 +58,6 @@ rm /tmp/raspiframe-sudoers
 # 5. systemdサービスを動的生成してインストール
 echo ""
 echo "Step 5: Installing systemd services..."
-
-# 仮想環境のパスを確認
-VENV_DIR="${CURRENT_HOME}/raspiframe-venv"
-VENV_PYTHON="${VENV_DIR}/bin/python3"
-
-if [ ! -f "$VENV_PYTHON" ]; then
-    echo "WARNING: Virtual environment not found at $VENV_PYTHON"
-    echo "Falling back to system Python3"
-    PYTHON_CMD="/usr/bin/python3"
-else
-    PYTHON_CMD="$VENV_PYTHON"
-    echo "Using virtual environment Python: $PYTHON_CMD"
-fi
 
 # raspiframe.service
 cat > /tmp/raspiframe.service << EOF
@@ -120,7 +71,7 @@ Type=simple
 User=${CURRENT_USER}
 WorkingDirectory=${SCRIPT_DIR}
 Environment="PATH=/usr/local/bin:/usr/bin:/bin"
-ExecStart=${PYTHON_CMD} -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+ExecStart=/usr/bin/python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 Restart=always
 RestartSec=5
 
@@ -150,37 +101,6 @@ WantedBy=graphical.target
 EOF
 sudo cp /tmp/raspiframe-kiosk.service /etc/systemd/system/
 rm /tmp/raspiframe-kiosk.service
-
-# raspiframe-rotary.service（オプション：ロータリーエンコーダー用）
-echo ""
-echo "Install rotary encoder service? (y/n)"
-read -r install_rotary
-if [[ "$install_rotary" =~ ^[Yy]$ ]]; then
-    cat > /tmp/raspiframe-rotary.service << EOF
-[Unit]
-Description=Raspiframe Rotary Encoder Service
-After=raspiframe.service network-online.target
-Wants=raspiframe.service
-
-[Service]
-Type=simple
-User=${CURRENT_USER}
-WorkingDirectory=${SCRIPT_DIR}
-Environment="PATH=/usr/local/bin:/usr/bin:/bin"
-Environment="ROTARY_WS_URL=ws://127.0.0.1:8000/ws/rotary"
-Environment="ROT_SW=22"
-ExecStart=${PYTHON_CMD} ${SCRIPT_DIR}/rotary.py
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-EOF
-    sudo cp /tmp/raspiframe-rotary.service /etc/systemd/system/
-    rm /tmp/raspiframe-rotary.service
-    sudo systemctl enable raspiframe-rotary.service
-    echo "✓ Rotary encoder service installed"
-fi
 
 sudo systemctl daemon-reload
 sudo systemctl enable raspiframe.service
@@ -331,139 +251,6 @@ killall dhcpcd-gtk 2>/dev/null || true
 # NetworkManagerのポップアップも無効化
 gsettings set org.gnome.nm-applet disable-disconnected-notifications true 2>/dev/null || true
 gsettings set org.gnome.nm-applet disable-connected-notifications true 2>/dev/null || true
-
-
-
-echo ""
-echo "Step 10: Configure display auto-rotation for labwc..."
-
-LABWC_DIR="$HOME/.config/labwc"
-
-# labwc 用ディレクトリを作成
-mkdir -p "$LABWC_DIR"
-
-########################################
-# 1) 回転・解像度本体スクリプト
-########################################
-cat > "$LABWC_DIR/rotate-portrait.sh" << 'EOF'
-#!/usr/bin/env bash
-set -e
-
-LOG="$HOME/.local/share/raspiframe-rotate.log"
-mkdir -p "$(dirname "$LOG")"
-echo "==== $(date) rotate start ====" >>"$LOG"
-
-# GUI（labwc）が立ち上がり切るのを少し待つ
-sleep 2
-
-# Wayland ソケットを自動検出
-export XDG_RUNTIME_DIR="/run/user/$(id -u)"
-WAY_SOCK="$(ls "$XDG_RUNTIME_DIR"/wayland-* 2>/dev/null | head -n1 || true)"
-if [ -n "$WAY_SOCK" ]; then
-    export WAYLAND_DISPLAY="$(basename "$WAY_SOCK")"
-fi
-echo "ENV WAYLAND_DISPLAY=$WAYLAND_DISPLAY XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR" >>"$LOG"
-
-# 解像度優先順位
-MODE1="1024x600"
-MODE2="1280x720"
-
-if command -v wlr-randr >/dev/null 2>&1; then
-    # 接続されてる出力名を1つ取得（例: HDMI-A-1）
-    OUT="$(wlr-randr | awk '/ connected/{print $1; exit}')"
-    [ -z "$OUT" ] && OUT="HDMI-A-1"
-
-    echo "[wayland] out=$OUT" >>"$LOG"
-
-    # ① 1024x600のカスタムモードを追加してから設定
-    if wlr-randr --output "$OUT" --custom-mode 1024x600@60Hz 2>>"$LOG"; then
-        echo "[wayland] custom mode 1024x600@60Hz added" >>"$LOG"
-    fi
-    
-    # ② 1024x600 + 左90°を試行
-    if wlr-randr --output "$OUT" --mode "$MODE1" --transform 90 2>>"$LOG"; then
-        echo "[wayland] set $MODE1 & rotated 90°" >>"$LOG"
-
-    # ③ ダメなら 1280x720 + 左90°
-    elif wlr-randr --output "$OUT" --mode "$MODE2" --transform 90 2>>"$LOG"; then
-        echo "[wayland] fallback: $MODE2 & rotated 90°" >>"$LOG"
-
-    # ③ それもダメなら回転だけ
-    elif wlr-randr --output "$OUT" --transform 90; then
-        echo "[wayland] fallback: rotated 90° only" >>"$LOG"
-
-    else
-        echo "[wayland] all wlr-randr attempts failed" >>"$LOG"
-    fi
-else
-    echo "[wayland] wlr-randr not found" >>"$LOG"
-fi
-
-exit 0
-EOF
-
-chmod +x "$LABWC_DIR/rotate-portrait.sh"
-echo "  - Created $LABWC_DIR/rotate-portrait.sh (left 90°, 1024x600→1280x720 fallback)"
-
-########################################
-# 2) labwc の autostart からキック
-########################################
-cat > "$LABWC_DIR/autostart" << 'EOF'
-#!/bin/sh
-$HOME/.config/labwc/rotate-portrait.sh &
-EOF
-
-chmod +x "$LABWC_DIR/autostart"
-echo "  - Created $LABWC_DIR/autostart (runs rotate-portrait.sh on session start)"
-
-# 11. Chromiumの翻訳機能を無効化
-echo ""
-echo "Step 11: Disable Chromium translate feature..."
-CHROMIUM_PREFS_DIR="${CURRENT_HOME}/.config/chromium/Default"
-CHROMIUM_PREFS_FILE="${CHROMIUM_PREFS_DIR}/Preferences"
-mkdir -p "$CHROMIUM_PREFS_DIR"
-
-# PythonでJSONを編集して翻訳機能を無効化
-python3 << EOF
-import json
-import os
-
-prefs_file = "$CHROMIUM_PREFS_FILE"
-try:
-    with open(prefs_file, 'r', encoding='utf-8') as f:
-        prefs = json.load(f)
-except (FileNotFoundError, json.JSONDecodeError):
-    prefs = {}
-
-# 翻訳機能を完全に無効化
-if 'translate' not in prefs:
-    prefs['translate'] = {}
-prefs['translate']['enabled'] = False
-prefs['translate']['denied_count'] = {}
-prefs['translate']['denied_count']['ja'] = 999999
-prefs['translate']['accepted_count'] = {}
-
-# 言語設定
-if 'intl' not in prefs:
-    prefs['intl'] = {}
-prefs['intl']['selected_languages'] = 'ja'
-prefs['intl']['accept_languages'] = 'ja,ja-JP'
-
-# 翻訳UIを無効化
-if 'translate_denied_count' not in prefs:
-    prefs['translate_denied_count'] = {}
-prefs['translate_denied_count']['ja'] = 999999
-
-# 設定を保存
-with open(prefs_file, 'w', encoding='utf-8') as f:
-    json.dump(prefs, f, ensure_ascii=False, indent=2)
-EOF
-
-if [ -f "$CHROMIUM_PREFS_FILE" ]; then
-    echo "✓ Chromium translate feature disabled in preferences"
-else
-    echo "✓ Chromium preferences file created with translate disabled"
-fi
 
 echo ""
 echo "========================================="
