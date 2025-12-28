@@ -147,7 +147,7 @@ sudo reboot
 cd ~
 git clone https://github.com/modulelab/Superphotoframe.git
 cd Superphotoframe
-git checkout v1.0.2
+git checkout v1.0.3
 ```
 
 ```bash
